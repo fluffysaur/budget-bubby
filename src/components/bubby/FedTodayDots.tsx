@@ -34,7 +34,7 @@ export function FedTodayDots({
                         data-fed={fed ? "true" : "false"}
                         className={`flex ${dot} shrink-0 items-center justify-center rounded-full border-2 border-(--border-ink) font-black leading-none transition-colors ${
                             fed
-                                ? "bg-(--pastel-mint) text-(--text-ink)"
+                                ? "bg-(--pastel-mint) text-(--text-on-pastel)"
                                 : "bg-(--bg-cream) text-(--text-faint) opacity-60"
                         }`}
                     >

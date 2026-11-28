@@ -13,7 +13,7 @@ import { SettingsSwitch } from "./SettingsSwitch";
 const ROW_CLASS =
     "flex items-center justify-between gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-cute-sm";
 const ICON_CLASS =
-    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm";
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) text-(--text-on-pastel) shadow-cute-sm";
 const TEST_BTN_CLASS =
     "hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer";
 

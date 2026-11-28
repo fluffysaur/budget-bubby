@@ -215,7 +215,7 @@ export function DesktopSidebar({
                                 : "w-full gap-3 px-3.5 py-2.5"
                         } ${
                             isActive
-                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-extrabold"
+                                ? "bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm font-extrabold"
                                 : "text-(--text-muted) hover:bg-(--bg-cream) hover:text-(--text-ink)"
                         }`}
                     >
@@ -223,7 +223,7 @@ export function DesktopSidebar({
                             strokeWidth={2.5}
                             className={`h-4 w-4 shrink-0 ${
                                 isActive
-                                    ? "text-(--text-ink)"
+                                    ? "text-(--text-on-pastel)"
                                     : "text-(--text-muted)"
                             }`}
                         />
@@ -278,7 +278,7 @@ export function DesktopSidebar({
                     collapsed ? "justify-center px-0" : "px-5 gap-3"
                 }`}
             >
-                <div className="flex h-9 w-9 items-end justify-center rounded-xl bg-(--accent-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm overflow-hidden shrink-0 pt-0.5">
+                <div className="flex h-9 w-9 items-end justify-center rounded-xl bg-(--accent-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm overflow-hidden shrink-0 pt-0.5">
                     <BubbyIcon className="h-8 w-8" />
                 </div>
                 {!collapsed && (

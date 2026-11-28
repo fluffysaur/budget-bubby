@@ -406,7 +406,7 @@ export function ExpenseFilterBar({
                             />
                             <span>Filters</span>
                             {activeFilterCount > 0 && (
-                                <span className="flex h-4.5 min-w-4.5 px-1 items-center justify-center rounded-full bg-(--pastel-lilac) border border-(--border-ink) text-2xs font-black text-(--text-ink)">
+                                <span className="flex h-4.5 min-w-4.5 px-1 items-center justify-center rounded-full bg-(--pastel-lilac) border border-(--border-ink) text-2xs font-black text-(--text-on-pastel)">
                                     {activeFilterCount}
                                 </span>
                             )}

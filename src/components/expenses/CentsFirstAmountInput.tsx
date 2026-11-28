@@ -300,7 +300,7 @@ export function CentsFirstAmountInput({
                         type="button"
                         onClick={popDigit}
                         aria-label="Backspace"
-                        className="flex h-12 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-2 border-(--border-ink) text-rose-700 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-coral) cursor-pointer transition-transform"
+                        className="flex h-12 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-2 border-(--border-ink) text-rose-700 dark:text-(--accent-coral-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-coral) cursor-pointer transition-transform"
                     >
                         <Delete className="h-5 w-5" />
                     </button>

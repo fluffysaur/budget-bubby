@@ -122,6 +122,8 @@
     --duration-base: 220ms;
     --duration-slow: 400ms;
 
+    color-scheme: light;
+
     /* Warm Oat Light Mode Tokens (SBW inspired) */
     --bg-canvas: #e9e2da;
     --bg-cream: #fbf7f1;
@@ -131,6 +133,10 @@
     --text-ink: #1a1a1a;
     --text-muted: #57504b;
     --text-faint: #6e645d;
+    /* Ink on solid pastel or accent fills: stays dark in both themes */
+    --text-on-pastel: #1a1a1a;
+    /* Text on --accent-coral: white in light, ink in dark */
+    --text-on-accent: #ffffff;
 
     --border-ink: #222222;
     --border-subtle: #d8d0c7;
@@ -196,6 +202,8 @@
 }
 
 .dark {
+    color-scheme: dark;
+
     /* Cozy Espresso Dark Mode Tokens */
     --bg-canvas: #121010;
     --bg-cream: #211e1c;
@@ -205,6 +213,8 @@
     --text-ink: #fbf7f1;
     --text-muted: #b8afa8;
     --text-faint: #a0968e;
+    --text-on-pastel: #1a1a1a;
+    --text-on-accent: #1a1a1a;
 
     --border-ink: #4a433f;
     --border-subtle: #38322e;
@@ -233,7 +243,7 @@
     --pastel-coral-subtle: #3d1c1a;
     --pastel-lilac: #c49bff;
     --pastel-lilac-light: #3d2657;
-    --pastel-lilac-dark: #a855f7;
+    --pastel-lilac-dark: #ad60f8;
     --pastel-butter: #fcd34d;
     --pastel-butter-light: #3b3018;
     --pastel-mint: #86efac;

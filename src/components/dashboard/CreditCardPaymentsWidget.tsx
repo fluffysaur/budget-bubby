@@ -158,7 +158,7 @@ export const CreditCardPaymentsWidget = React.memo(
             >
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pb-4 border-b-2 border-(--border-ink)">
                     <div className="flex items-center gap-2.5 shrink-0">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm">
                             <CreditCardIcon
                                 className="h-5 w-5"
                                 strokeWidth={2.5}
@@ -173,7 +173,7 @@ export const CreditCardPaymentsWidget = React.memo(
                             <button
                                 type="button"
                                 onClick={() => setIsBulkSettleOpen(true)}
-                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--pastel-coral) min-h-11 px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--pastel-coral) min-h-11 px-3 py-1.5 text-xs font-bold text-(--text-on-pastel) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                             >
                                 <span>
                                     Settle Overdue ({overdueCycles.length})

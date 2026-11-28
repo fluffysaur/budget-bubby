@@ -117,7 +117,7 @@ export function CategoryProgressList({
             {/* Over Budget Alert Banner */}
             {overBudgetCategories.length > 0 && (
                 <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-cute-sm">
-                    <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border-2 border-(--border-ink) shrink-0 shadow-cute-sm">
+                    <div className="p-1.5 rounded-xl bg-(--accent-coral) text-(--text-on-accent) border-2 border-(--border-ink) shrink-0 shadow-cute-sm">
                         <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
                     </div>
                     <div className="text-xs sm:text-sm min-w-0 flex-1">
@@ -394,7 +394,7 @@ export function CategoryProgressList({
                                                 <button
                                                     type="button"
                                                     {...triggerProps}
-                                                    className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-(--accent-lilac)/30 text-(--text-ink) p-1.5 shadow-cute-sm cursor-pointer"
+                                                    className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-(--accent-lilac)/30 text-(--text-on-pastel) p-1.5 shadow-cute-sm cursor-pointer"
                                                 >
                                                     <PiggyBank className="h-3.5 w-3.5" />
                                                 </button>

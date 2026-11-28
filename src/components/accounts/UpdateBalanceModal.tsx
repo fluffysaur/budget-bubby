@@ -277,7 +277,7 @@ export function UpdateBalanceModal({
                             onClose();
                             onOpenAddAccount();
                         }}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-(--text-on-pastel) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                     >
                         <Plus className="h-4 w-4" strokeWidth={2.5} />
                         <span>Add Account</span>

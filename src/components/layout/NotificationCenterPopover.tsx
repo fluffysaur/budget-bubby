@@ -595,7 +595,7 @@ export function NotificationCenterPopover({
                 {unreadCount > 0 && (
                     <span
                         data-testid="notification-badge-count"
-                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--accent-coral) border border-(--border-ink) px-1 text-2xs font-black text-white shadow-cute-sm animate-pop font-mono-num"
+                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--accent-coral) border border-(--border-ink) px-1 text-2xs font-black text-(--text-on-accent) shadow-cute-sm animate-pop font-mono-num"
                     >
                         {unreadCount}
                     </span>
@@ -624,7 +624,7 @@ export function NotificationCenterPopover({
                         {/* Mobile Sticky Header */}
                         <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-cute-sm">
                             <div className="flex items-center gap-2.5">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm">
                                     <Bell
                                         className="h-4 w-4"
                                         strokeWidth={2.5}
@@ -663,7 +663,7 @@ export function NotificationCenterPopover({
                         {/* Desktop Header */}
                         <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
                             <div className="flex items-center gap-2">
-                                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm">
                                     <Bell
                                         className="h-4 w-4"
                                         strokeWidth={2.5}

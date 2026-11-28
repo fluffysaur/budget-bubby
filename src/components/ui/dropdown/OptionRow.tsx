@@ -65,7 +65,9 @@ export function OptionRow({
             {indicator === "checkbox" && (
                 <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 border-(--border-ink) transition-colors ${
-                        selected ? "bg-(--pastel-lilac)" : "bg-(--bg-card)"
+                        selected
+                            ? "bg-(--pastel-lilac) text-(--text-on-pastel)"
+                            : "bg-(--bg-card)"
                     }`}
                     aria-hidden="true"
                 >

@@ -62,10 +62,10 @@ export function ToolbarPill({
             type="button"
             onClick={onClick}
             // Fixed width so "Edit" -> "Done" doesn't move the other controls
-            className={`relative inline-flex h-9 w-20 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-3 text-xs font-bold text-(--text-ink) transition-colors after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] ${
+            className={`relative inline-flex h-9 w-20 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-3 text-xs font-bold transition-colors after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] ${
                 active
-                    ? "bg-(--pastel-butter) hover:bg-(--accent-butter)"
-                    : "bg-(--bg-cream) hover:bg-(--bg-card)"
+                    ? "bg-(--pastel-butter) text-(--text-on-pastel) hover:bg-(--accent-butter)"
+                    : "bg-(--bg-cream) text-(--text-ink) hover:bg-(--bg-card)"
             }`}
         >
             {children}

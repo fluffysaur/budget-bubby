@@ -34,7 +34,7 @@ export function FilterChip({
             aria-pressed={selected}
             className={`inline-flex shrink-0 items-center justify-center rounded-xl border-2 transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--pastel-lilac) disabled:cursor-not-allowed disabled:opacity-50 ${SIZE_CLASS[sizeVariant]} ${
                 selected
-                    ? "bg-(--pastel-lilac) text-(--text-ink) border-(--border-ink) shadow-cute-sm font-bold"
+                    ? "bg-(--pastel-lilac) text-(--text-on-pastel) border-(--border-ink) shadow-cute-sm font-bold"
                     : "bg-(--bg-canvas) text-(--text-muted) border-(--border-subtle) hover:border-(--border-ink) hover:text-(--text-ink) font-semibold"
             } ${className}`}
             {...props}

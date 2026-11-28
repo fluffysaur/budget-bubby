@@ -1006,7 +1006,11 @@ export function ModalHeader({
             <div className="flex items-center gap-2.5 min-w-0 flex-1 pointer-events-none">
                 {icon && (
                     <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-(--text-ink) border border-(--border-ink) ${iconBgColor}`}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-(--border-ink) ${iconBgColor} ${
+                            /-(light|subtle)\)|bg-\(--bg-/.test(iconBgColor)
+                                ? "text-(--text-ink)"
+                                : "text-(--text-on-pastel)"
+                        }`}
                     >
                         {icon}
                     </div>

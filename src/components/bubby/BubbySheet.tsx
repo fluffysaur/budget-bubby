@@ -173,7 +173,7 @@ function PenguinCard({
                     data-fed={fed ? "true" : "false"}
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-(--border-ink) text-2xs font-black leading-none ${
                         fed
-                            ? "bg-(--pastel-mint) text-(--text-ink)"
+                            ? "bg-(--pastel-mint) text-(--text-on-pastel)"
                             : "bg-(--bg-cream) text-(--text-faint) opacity-60"
                     }`}
                 >

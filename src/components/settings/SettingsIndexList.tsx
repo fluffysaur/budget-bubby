@@ -61,7 +61,7 @@ export function SettingsIndexList({
                         }`}
                     >
                         <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm ${SECTION_COLORS[id]}`}
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) text-(--text-on-pastel) shadow-cute-sm ${SECTION_COLORS[id]}`}
                         >
                             {SECTION_ICONS[id]}
                         </div>

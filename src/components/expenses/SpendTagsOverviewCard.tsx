@@ -135,7 +135,7 @@ export function SpendTagsOverviewCard({
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b-2 border-(--border-ink)">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm">
                         <Tag className="h-4.5 w-4.5" />
                     </div>
                     <div>
@@ -155,7 +155,7 @@ export function SpendTagsOverviewCard({
 
                 {activeTag && (
                     <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <span className="text-xs font-bold text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-cute-sm">
+                        <span className="text-xs font-bold text-(--text-on-pastel) bg-(--pastel-lilac) border-2 border-(--border-ink) px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-cute-sm">
                             <Filter className="h-3 w-3" />
                             <span>
                                 Filtering by #{normalizeExpenseTag(activeTag)}

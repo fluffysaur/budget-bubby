@@ -40,14 +40,16 @@ export function BankSurplusModal({
             <ModalHeader
                 title="Bank Surplus"
                 subtitle={`Reserve ${formatSGD(surplusAmount)} from ${formatDisplayMonth(month)}`}
-                icon={<Shield className="h-5 w-5 text-indigo-600" />}
+                icon={
+                    <Shield className="h-5 w-5 text-indigo-600 dark:text-current" />
+                }
                 onClose={onClose}
             />
 
             <ModalBody className="space-y-4">
                 {/* Visual callout card */}
                 <div className="rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-4 shadow-cute-sm flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-butter) text-(--text-ink)">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-butter) text-(--text-on-pastel)">
                         <Shield className="h-5 w-5" strokeWidth={2.5} />
                     </div>
                     <div>

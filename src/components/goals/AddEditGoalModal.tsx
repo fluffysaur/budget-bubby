@@ -82,7 +82,7 @@ const SUGGESTION_EMOJIS: ReadonlySet<string> = new Set(
 const CHIP_CLASS =
     "inline-flex min-h-9 items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-press cursor-pointer";
 const CHIP_ON =
-    "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm";
+    "bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm";
 const CHIP_OFF =
     "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)";
 

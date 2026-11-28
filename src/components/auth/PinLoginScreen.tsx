@@ -226,7 +226,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
         >
             <div className="w-full max-w-xs flex flex-col items-center">
                 {/* App Branding & Icon */}
-                <div className="flex h-16 w-16 items-end justify-center rounded-3xl bg-(--accent-lilac) border-2 border-(--border-ink) text-(--text-ink) mb-4 shadow-cute overflow-hidden pt-1">
+                <div className="flex h-16 w-16 items-end justify-center rounded-3xl bg-(--accent-lilac) border-2 border-(--border-ink) text-(--text-on-pastel) mb-4 shadow-cute overflow-hidden pt-1">
                     <BubbyIcon className="h-14 w-14" />
                 </div>
 
@@ -254,7 +254,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         data-testid="biometric-unlock-btn"
                         onClick={handleBiometricUnlock}
                         disabled={authLoading || isBiometricAuthenticating}
-                        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-6 rounded-2xl bg-(--pastel-butter) hover:bg-amber-300 border-2 border-(--border-ink) text-(--text-ink) font-bold text-sm shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press cursor-pointer disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-6 rounded-2xl bg-(--pastel-butter) hover:bg-amber-300 border-2 border-(--border-ink) text-(--text-on-pastel) font-bold text-sm shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press cursor-pointer disabled:opacity-50"
                     >
                         {isBiometricAuthenticating ? (
                             <>
@@ -427,7 +427,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 maxWidth="max-w-sm"
             >
                 <div className="flex flex-col min-h-0 flex-1 overflow-hidden p-6 text-center items-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-(--pastel-lilac) text-(--text-ink) mb-4 border-2 border-(--border-ink) shadow-cute-sm">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-(--pastel-lilac) text-(--text-on-pastel) mb-4 border-2 border-(--border-ink) shadow-cute-sm">
                         <Fingerprint className="h-8 w-8" strokeWidth={2.5} />
                     </div>
 
@@ -448,7 +448,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                             data-testid="confirm-enroll-biometrics-btn"
                             disabled={isEnrolling}
                             onClick={handleConfirmEnrollment}
-                            className="w-full py-3 rounded-xl bg-(--pastel-lilac) hover:bg-(--pastel-lilac-dark) text-(--text-ink) text-xs font-black border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            className="w-full py-3 rounded-xl bg-(--pastel-lilac) hover:bg-(--pastel-lilac-dark) text-(--text-on-pastel) text-xs font-black border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                         >
                             {isEnrolling ? (
                                 <>

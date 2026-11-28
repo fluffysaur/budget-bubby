@@ -55,7 +55,7 @@ export const IOSInstallModal: React.FC<IOSInstallModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-(--bg-cream) border-2 border-(--border-ink)">
-                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) text-xs font-bold shrink-0">
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-(--pastel-lilac) text-(--text-on-pastel) border border-(--border-ink) text-xs font-bold shrink-0">
                             3
                         </div>
                         <p className="text-xs font-bold text-(--text-ink)">

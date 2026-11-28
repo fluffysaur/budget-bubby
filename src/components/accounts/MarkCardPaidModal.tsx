@@ -169,7 +169,7 @@ function MarkCardPaidForm({
                         <button
                             type="button"
                             onClick={handleQuickZero}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border-2 border-(--border-ink) bg-(--pastel-lilac) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) shadow-cute-sm transition-press cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border-2 border-(--border-ink) bg-(--pastel-lilac) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 text-(--text-on-pastel) shadow-cute-sm transition-press cursor-pointer"
                         >
                             $0 (No Spend)
                         </button>

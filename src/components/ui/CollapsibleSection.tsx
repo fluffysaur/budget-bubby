@@ -86,7 +86,7 @@ export function CollapsibleSection({
                     <div
                         className={`flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) transition-press ${
                             isOpen
-                                ? "rotate-90 bg-(--pastel-lilac) text-(--text-ink) dark:text-(--bg-canvas)"
+                                ? "rotate-90 bg-(--pastel-lilac) text-(--text-on-pastel) dark:text-(--bg-canvas)"
                                 : "bg-(--bg-canvas) text-(--text-muted) group-hover:text-(--text-ink)"
                         }`}
                     >

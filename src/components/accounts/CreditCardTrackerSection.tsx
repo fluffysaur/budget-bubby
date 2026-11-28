@@ -902,7 +902,7 @@ export function CreditCardTrackerSection({
                                                                 }
                                                                 className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer ${
                                                                     stmt.is_paid
-                                                                        ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
+                                                                        ? "bg-(--pastel-mint) text-(--text-on-pastel) hover:opacity-90"
                                                                         : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
                                                                 }`}
                                                             >
@@ -954,7 +954,7 @@ export function CreditCardTrackerSection({
                                                                         cardMonth,
                                                                     )
                                                                 }
-                                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
+                                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) hover:text-(--text-on-pastel) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
                                                             >
                                                                 Edit Statement
                                                             </button>
