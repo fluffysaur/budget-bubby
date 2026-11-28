@@ -14,6 +14,7 @@ import {
 } from "../src/context/HouseholdContext";
 import {
     fadeRise,
+    getFadeRise,
     pop,
     collapse,
     listItem,
@@ -140,4 +141,27 @@ describe("Motion Foundation & Touch Ergonomics", () => {
         expect(listItem.layout).toBe(true);
         expect(springSnappy.type).toBe("spring");
     });
+
+    it.each([
+        { reduced: false, rises: true },
+        { reduced: true, rises: false },
+    ])(
+        "getFadeRise rises: $rises when reduced motion is $reduced",
+        ({ reduced, rises }) => {
+            vi.stubGlobal("matchMedia", (query: string) => ({
+                matches: reduced,
+                media: query,
+            }));
+
+            const { initial, animate, exit } = getFadeRise();
+            for (const state of [initial, animate, exit]) {
+                expect("y" in state).toBe(rises);
+            }
+            expect(initial.opacity).toBe(0);
+            expect(animate.opacity).toBe(1);
+            expect(exit.opacity).toBe(0);
+
+            vi.unstubAllGlobals();
+        },
+    );
 });

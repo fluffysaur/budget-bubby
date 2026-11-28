@@ -9,7 +9,7 @@ import { m } from "motion/react";
 import { CategoryBadge } from "../ui/CategoryBadge";
 import { CurrencyText } from "../ui/CurrencyText";
 import { TruncatedText } from "../ui/TruncatedText";
-import { fadeRise } from "../../lib/motion";
+import { getFadeRise } from "../../lib/motion";
 import { normalizeExpenseTag } from "../../lib/expenseFormDraft";
 import { aggregateSpendTags, isSameTag } from "../../lib/spendTags";
 import type { Category, Expense } from "../../types/finance";
@@ -42,7 +42,7 @@ export function ActiveTagSummary({
 
     return (
         <m.div
-            {...fadeRise}
+            {...getFadeRise()}
             data-testid="active-tag-summary"
             className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-lilac-light) px-3 py-2 ${className}`}
         >

@@ -28,7 +28,7 @@ import {
     useNavigationType,
 } from "react-router-dom";
 import { LazyMotion, domAnimation, MotionConfig, m } from "motion/react";
-import { fadeRise } from "./lib/motion";
+import { getFadeRise } from "./lib/motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import {
@@ -430,9 +430,8 @@ function AppLayoutInner() {
                         <Suspense fallback={<RouteSkeletonLoader />}>
                             <m.div
                                 key={location.pathname}
-                                initial={fadeRise.initial}
-                                animate={fadeRise.animate}
-                                transition={fadeRise.transition}
+                                data-testid="route-wrapper"
+                                {...getFadeRise()}
                                 className="w-full"
                             >
                                 <Routes>

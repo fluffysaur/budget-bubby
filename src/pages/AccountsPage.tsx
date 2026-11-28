@@ -17,7 +17,7 @@ import {
     ReceiptText,
 } from "lucide-react";
 import { m } from "motion/react";
-import { fadeRise } from "../lib/motion";
+import { getFadeRise } from "../lib/motion";
 import { useHousehold } from "../context/HouseholdContext";
 import {
     PageHeader,
@@ -197,7 +197,7 @@ export function AccountsPage({
             />
 
             {/* Embedded Sub-Tab Content with fadeRise animation */}
-            <m.div key={activeTab} {...fadeRise} className="pt-1">
+            <m.div key={activeTab} {...getFadeRise()} className="pt-1">
                 {activeTab === "credit_cards" ? (
                     <CreditCardTrackerSection
                         members={members}
