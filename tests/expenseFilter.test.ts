@@ -61,3 +61,21 @@ describe("matchesExpenseFilter category matching", () => {
         );
     });
 });
+
+describe("matchesExpenseFilter settled and goal", () => {
+    const e = {
+        ...expense("a"),
+        settled: true,
+        goal_id: "g1",
+    } as unknown as Expense;
+
+    it("matches settled state", () => {
+        expect(matchesExpenseFilter(e, { settled: true })).toBe(true);
+        expect(matchesExpenseFilter(e, { settled: false })).toBe(false);
+    });
+
+    it("matches goal id", () => {
+        expect(matchesExpenseFilter(e, { goalId: "g1" })).toBe(true);
+        expect(matchesExpenseFilter(e, { goalId: "g2" })).toBe(false);
+    });
+});

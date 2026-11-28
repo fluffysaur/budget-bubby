@@ -1,209 +1,318 @@
 /**
- * Expense Trends & Monthly Averages Card
- * Streamlined with PR #9 visual meters:
- * - Current month hero total paired with DeltaBadge vs 3-mo avg
- * - Lightweight Sparkline showing 6-month spend history without heavy Recharts
- * - Category averages with MeterBar markers behind an expandable "More" toggle
+ * Expense Trend Card
+ * Always-open card: 6-month spend bars with a 3-month average line, plus the
+ * categories running over their monthly average (or the top categories).
  */
 
-import { useState } from "react";
-import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+    Bar,
+    BarChart,
+    Cell,
+    ReferenceLine,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+} from "recharts";
 import { formatSGDEstimate } from "../../lib/currency";
-import { TooltipPopover } from "../ui/TooltipPopover";
+import { MONTH_NAMES_SHORT } from "../../lib/dateUtils";
 import { Card } from "../ui/Card";
-import { Sparkline } from "../ui/Sparkline";
-import { DeltaBadge } from "../ui/DeltaBadge";
-import { MeterBar } from "../ui/MeterBar";
-import type {
-    ExpenseTrendsSummary,
-    CategoryAverageMetric,
-} from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { MeterBar } from "../ui/MeterBar";
+import { TooltipPopover } from "../ui/TooltipPopover";
+import { TruncatedText } from "../ui/TruncatedText";
+import type {
+    CategoryAverageMetric,
+    ExpenseTrendsSummary,
+} from "../../types/finance";
 
 export interface ExpenseTrendsCardProps {
     trends: ExpenseTrendsSummary;
-    perspectiveLabel?: string;
     className?: string;
+}
+
+const COLLAPSED_ROWS = 3;
+
+interface TrendBarPoint {
+    month: string;
+    label: string;
+    total: number;
+}
+
+interface TrendTooltipProps {
+    active?: boolean;
+    payload?: { payload: TrendBarPoint }[];
+}
+
+function TrendTooltip({ active, payload }: TrendTooltipProps) {
+    if (!active || !payload?.length) return null;
+    const point = payload[0].payload;
+    return (
+        <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-3 py-2 shadow-cute text-xs">
+            <div className="font-bold text-(--text-ink) font-display">
+                {point.label}
+            </div>
+            <div className="text-(--text-muted) font-mono-num">
+                <CurrencyText amount={point.total} />
+            </div>
+        </div>
+    );
+}
+
+function monthShortName(month: string): string {
+    const idx = parseInt(month.slice(5, 7), 10) - 1;
+    return MONTH_NAMES_SHORT[idx] ?? month;
+}
+
+function overage(cat: CategoryAverageMetric): number {
+    return cat.averageMonthly > 0 ? cat.currentMonth - cat.averageMonthly : 0;
+}
+
+function CategoryRow({ cat }: { cat: CategoryAverageMetric }) {
+    const isOver =
+        cat.averageMonthly > 0 && cat.currentMonth > cat.averageMonthly;
+    return (
+        <li className="space-y-1" data-testid={`trend-cat-${cat.categoryId}`}>
+            <div className="flex items-center gap-2 text-xs">
+                <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full border border-(--border-ink)"
+                    style={{ backgroundColor: cat.color }}
+                    aria-hidden="true"
+                />
+                <span className="min-w-0 flex-1 font-bold text-(--text-ink)">
+                    <TruncatedText text={cat.categoryName} />
+                </span>
+                <span className="shrink-0 font-mono-num font-bold text-(--text-ink)">
+                    <CurrencyText amount={cat.currentMonth} />
+                    <span className="font-normal text-(--text-muted)">
+                        {" / "}
+                        <CurrencyText
+                            formatted={formatSGDEstimate(cat.averageMonthly)}
+                        />{" "}
+                        avg
+                    </span>
+                </span>
+            </div>
+            <MeterBar
+                value={cat.currentMonth}
+                max={
+                    cat.averageMonthly > 0
+                        ? Math.max(cat.averageMonthly, cat.currentMonth)
+                        : cat.currentMonth
+                }
+                marker={cat.averageMonthly}
+                size="sm"
+                tone={isOver ? "near" : "ok"}
+                aria-label={`${cat.categoryName} vs average`}
+            />
+        </li>
+    );
 }
 
 export function ExpenseTrendsCard({
     trends,
-    perspectiveLabel = "Household",
     className = "",
 }: ExpenseTrendsCardProps) {
-    const [showCategoryDetails, setShowCategoryDetails] = useState(false);
+    const [expanded, setExpanded] = useState(false);
 
-    const {
-        monthlySeries = [],
-        rolling3MonthAvg = 0,
-        rolling6MonthAvg = 0,
-        currentMonthTotal = 0,
-        vsAverageDelta = 0,
-        categoryAverages = [],
-    } = trends || {};
+    const monthlySeries = trends?.monthlySeries;
+    const categoryAverages = trends?.categoryAverages;
+    const rolling3MonthAvg = trends?.rolling3MonthAvg ?? 0;
+    const vsAverageDelta = trends?.vsAverageDelta ?? 0;
 
-    const isBelowAvg = vsAverageDelta <= 0;
+    const chartData = useMemo<TrendBarPoint[]>(
+        () =>
+            (monthlySeries ?? []).map((pt) => ({
+                month: pt.month,
+                label: pt.label,
+                total: pt.totalSpent,
+            })),
+        [monthlySeries],
+    );
+
+    const { rows, heading } = useMemo(() => {
+        const cats = categoryAverages ?? [];
+        const over = cats
+            .filter(
+                (c) =>
+                    c.averageMonthly > 0 && c.currentMonth > c.averageMonthly,
+            )
+            .sort((a, b) => overage(b) - overage(a));
+        if (over.length > 0) {
+            const rest = cats
+                .filter((c) => !over.includes(c))
+                .sort((a, b) => b.currentMonth - a.currentMonth);
+            return { rows: [...over, ...rest], heading: "Over average" };
+        }
+        return {
+            rows: [...cats].sort((a, b) => b.currentMonth - a.currentMonth),
+            heading: "Top categories",
+        };
+    }, [categoryAverages]);
+
+    const hasHistory = chartData.some((pt) => pt.total > 0);
     const vsThreeMonthPct =
         rolling3MonthAvg > 0 ? (vsAverageDelta / rolling3MonthAvg) * 100 : 0;
-
-    const sparklineData = monthlySeries.map((pt) => pt.totalSpent);
+    const deltaPct = Math.round(vsThreeMonthPct);
+    const visibleRows = expanded ? rows : rows.slice(0, COLLAPSED_ROWS);
+    const lastIdx = chartData.length - 1;
 
     return (
-        <Card variant="white" padding="md" className={className}>
-            {/* Header: Hero amount, DeltaBadge, and Tooltip */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-(--border-subtle)">
-                <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                            This Month
-                        </span>
-                        <TooltipPopover
-                            ariaLabel="Expense Trends Methodology"
-                            title="How Averages Are Calculated"
-                        >
-                            Spendable categories plus subscriptions. Personal
-                            view uses your share.
-                        </TooltipPopover>
-                    </div>
-                    <div className="font-display font-black text-xl sm:text-2xl text-(--text-ink) font-mono-num mt-0.5">
-                        <CurrencyText amount={currentMonthTotal} />
-                    </div>
-                    <span className="text-[11px] text-(--text-muted)">
-                        {perspectiveLabel} • 6 months
-                    </span>
+        <Card
+            variant="white"
+            padding="md"
+            data-testid="expense-trends-card"
+            className={className}
+        >
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-1.5">
+                    <h3 className="text-sm font-black font-display text-(--text-ink)">
+                        Trend
+                    </h3>
+                    <TooltipPopover
+                        ariaLabel="How to read the trend"
+                        title="Reading the Trend"
+                    >
+                        <ul className="space-y-1.5">
+                            <li>
+                                Bars are monthly spend; the highlighted bar is
+                                this month.
+                            </li>
+                            <li>
+                                The dashed line is your average for the 3 months
+                                before this one.
+                            </li>
+                            <li>
+                                Category rows: the bar is this month&rsquo;s
+                                spend, the tick is that category&rsquo;s average
+                                over the past months shown. Yellow means over
+                                average, green means under.
+                            </li>
+                            <li>
+                                Counts spendable categories plus subscriptions.
+                                Personal view uses your share.
+                            </li>
+                        </ul>
+                    </TooltipPopover>
                 </div>
-
-                <div className="flex flex-col items-end gap-1.5">
-                    <DeltaBadge
-                        value={vsThreeMonthPct}
-                        goodWhen="down"
-                        label="vs 3-mo avg"
-                    />
-                    <span className="text-[11px] text-(--text-muted) font-mono-num">
-                        3-mo avg:{" "}
+                {hasHistory && rolling3MonthAvg > 0 && (
+                    <span
+                        data-testid="trend-delta"
+                        className={`shrink-0 font-mono-num text-xs font-bold ${
+                            deltaPct > 0
+                                ? "text-(--tone-over-text) dark:text-rose-200"
+                                : deltaPct < 0
+                                  ? "text-(--tone-ok-text) dark:text-(--pastel-mint)"
+                                  : "text-(--text-muted)"
+                        }`}
+                    >
+                        {deltaPct > 0 ? "+" : deltaPct < 0 ? "−" : ""}
+                        {Math.abs(deltaPct)}% vs avg{" "}
                         <CurrencyText
                             formatted={formatSGDEstimate(rolling3MonthAvg)}
                         />
                     </span>
-                </div>
+                )}
             </div>
 
-            {/* Sparkline History Visual */}
-            <div className="py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-(--border-subtle)">
-                <div>
-                    <span className="text-xs font-bold text-(--text-ink)">
-                        6-Month Trend
-                    </span>
-                    <span className="block text-[11px] text-(--text-muted)">
-                        Baseline avg:{" "}
-                        <CurrencyText
-                            formatted={formatSGDEstimate(rolling6MonthAvg)}
-                        />
-                    </span>
-                </div>
-                <div className="w-full sm:w-auto flex justify-end">
-                    <Sparkline
-                        data={sparklineData}
-                        width={180}
-                        height={32}
-                        tone={isBelowAvg ? "ok" : "over"}
-                        aria-label="6-month spend trend line"
-                    />
-                </div>
-            </div>
-
-            {/* Expandable Per-Category Averages vs Current Month */}
-            {categoryAverages.length > 0 && (
-                <div className="pt-2">
-                    <button
-                        type="button"
-                        onClick={() => setShowCategoryDetails((prev) => !prev)}
-                        className="flex items-center justify-between w-full text-xs font-bold text-(--text-muted) hover:text-(--text-ink) py-1.5 cursor-pointer transition-colors"
-                        aria-expanded={showCategoryDetails}
+            <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+                {!hasHistory ? (
+                    <div className="py-4 text-center">
+                        <p className="text-sm font-bold font-display text-(--text-ink)">
+                            No History
+                        </p>
+                        <p className="text-xs text-(--text-muted)">
+                            Log expenses to see your trend.
+                        </p>
+                    </div>
+                ) : (
+                    <div
+                        role="img"
+                        aria-label="Spend over 6 months"
+                        className="mt-3 h-35 w-full"
                     >
-                        <span className="flex items-center gap-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-                            <span>Vs Average ({categoryAverages.length})</span>
-                        </span>
-                        <span className="flex items-center gap-1 font-mono-num text-[11px]">
-                            {showCategoryDetails ? (
-                                <ChevronUp
-                                    className="h-4 w-4"
-                                    strokeWidth={2.5}
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={chartData}
+                                margin={{
+                                    top: 8,
+                                    right: 4,
+                                    left: 4,
+                                    bottom: 0,
+                                }}
+                            >
+                                <XAxis
+                                    dataKey="month"
+                                    tickFormatter={monthShortName}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tick={{
+                                        fontSize: 11,
+                                        fill: "var(--text-faint)",
+                                    }}
                                 />
-                            ) : (
-                                <ChevronDown
-                                    className="h-4 w-4"
-                                    strokeWidth={2.5}
+                                <Tooltip
+                                    content={<TrendTooltip />}
+                                    cursor={{ fill: "var(--bg-cream)" }}
                                 />
-                            )}
-                        </span>
-                    </button>
+                                <Bar
+                                    dataKey="total"
+                                    radius={[6, 6, 0, 0]}
+                                    maxBarSize={36}
+                                    isAnimationActive={false}
+                                >
+                                    {chartData.map((pt, idx) => (
+                                        <Cell
+                                            key={pt.month}
+                                            fill={
+                                                idx === lastIdx
+                                                    ? "var(--pastel-lilac)"
+                                                    : "var(--meter-track)"
+                                            }
+                                            stroke="var(--border-ink)"
+                                            strokeWidth={
+                                                idx === lastIdx ? 2 : 1
+                                            }
+                                        />
+                                    ))}
+                                </Bar>
+                                {rolling3MonthAvg > 0 && (
+                                    <ReferenceLine
+                                        y={rolling3MonthAvg}
+                                        stroke="var(--text-muted)"
+                                        strokeDasharray="4 4"
+                                    />
+                                )}
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
 
-                    {showCategoryDetails && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                            {categoryAverages.map(
-                                (cat: CategoryAverageMetric) => {
-                                    const isOver =
-                                        cat.averageMonthly > 0 &&
-                                        cat.currentMonth > cat.averageMonthly;
-                                    return (
-                                        <div
-                                            key={cat.categoryId}
-                                            className="rounded-xl border border-(--border-subtle) bg-(--bg-cream) p-2 text-xs shadow-cute-sm"
-                                        >
-                                            <div className="flex items-center justify-between gap-1 mb-1.5">
-                                                <span className="font-bold text-(--text-ink) flex items-center gap-1.5 min-w-0 truncate">
-                                                    <span
-                                                        className="h-2 w-2 rounded-full border border-(--border-ink) shrink-0"
-                                                        style={{
-                                                            backgroundColor:
-                                                                cat.color,
-                                                        }}
-                                                    />
-                                                    <span className="truncate">
-                                                        {cat.categoryName}
-                                                    </span>
-                                                </span>
-                                                <span className="font-mono-num font-bold shrink-0 text-[11px]">
-                                                    <CurrencyText
-                                                        amount={
-                                                            cat.currentMonth
-                                                        }
-                                                    />
-                                                    <span className="text-(--text-muted) font-normal">
-                                                        {" "}
-                                                        /{" "}
-                                                        <CurrencyText
-                                                            formatted={formatSGDEstimate(
-                                                                cat.averageMonthly,
-                                                            )}
-                                                        />
-                                                    </span>
-                                                </span>
-                                            </div>
-                                            <MeterBar
-                                                value={cat.currentMonth}
-                                                max={
-                                                    cat.averageMonthly > 0
-                                                        ? Math.max(
-                                                              cat.averageMonthly,
-                                                              cat.currentMonth,
-                                                          )
-                                                        : cat.currentMonth
-                                                }
-                                                marker={cat.averageMonthly}
-                                                size="sm"
-                                                tone={isOver ? "over" : "ok"}
-                                            />
-                                        </div>
-                                    );
-                                },
+                {rows.length > 0 && (
+                    <div className="mt-3 border-t border-(--border-subtle) pt-3 lg:mt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                                {heading}
+                            </span>
+                            {rows.length > COLLAPSED_ROWS && (
+                                <button
+                                    type="button"
+                                    onClick={() => setExpanded((prev) => !prev)}
+                                    aria-expanded={expanded}
+                                    className="min-h-11 cursor-pointer px-2 text-xs font-bold text-(--text-muted) transition-colors hover:text-(--text-ink)"
+                                >
+                                    {expanded ? "Show less" : "See all"}
+                                </button>
                             )}
                         </div>
-                    )}
-                </div>
-            )}
+                        <ul className="space-y-2.5">
+                            {visibleRows.map((cat) => (
+                                <CategoryRow key={cat.categoryId} cat={cat} />
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
         </Card>
     );
 }
