@@ -135,6 +135,7 @@
     --text-faint: #6e645d;
     /* Ink on solid pastel or accent fills: stays dark in both themes */
     --text-on-pastel: #1a1a1a;
+    --text-on-pastel-muted: #57504b;
     /* Text on --accent-coral: white in light, ink in dark */
     --text-on-accent: #ffffff;
 
@@ -214,6 +215,7 @@
     --text-muted: #b8afa8;
     --text-faint: #a0968e;
     --text-on-pastel: #1a1a1a;
+    --text-on-pastel-muted: #3d3633;
     --text-on-accent: #1a1a1a;
 
     --border-ink: #4a433f;

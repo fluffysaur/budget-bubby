@@ -45,20 +45,29 @@ export function SpendTagChips({
                 aria-hidden="true"
             />
             <div className="flex min-w-0 flex-1 snap-x items-center gap-2 overflow-x-auto py-1 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden mask-[linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]">
-                {aggregates.map((item) => (
-                    <FilterChip
-                        key={item.tag}
-                        selected={isSameTag(activeTag, item.tag)}
-                        onClick={() => onSelectTag(item.tag)}
-                        className="min-h-11 snap-start whitespace-nowrap"
-                        data-testid={`tag-chip-${item.tag}`}
-                    >
-                        <span>#{item.tag}</span>
-                        <span className="font-mono-num font-normal text-(--text-muted)">
-                            {formatSGDEstimate(item.totalAmount)}
-                        </span>
-                    </FilterChip>
-                ))}
+                {aggregates.map((item) => {
+                    const selected = isSameTag(activeTag, item.tag);
+                    return (
+                        <FilterChip
+                            key={item.tag}
+                            selected={selected}
+                            onClick={() => onSelectTag(item.tag)}
+                            className="min-h-11 snap-start whitespace-nowrap"
+                            data-testid={`tag-chip-${item.tag}`}
+                        >
+                            <span>#{item.tag}</span>
+                            <span
+                                className={`font-mono-num font-normal ${
+                                    selected
+                                        ? "text-(--text-on-pastel-muted)"
+                                        : "text-(--text-muted)"
+                                }`}
+                            >
+                                {formatSGDEstimate(item.totalAmount)}
+                            </span>
+                        </FilterChip>
+                    );
+                })}
             </div>
         </div>
     );

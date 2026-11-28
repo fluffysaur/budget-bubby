@@ -81,6 +81,15 @@ describe("theme contrast tokens", () => {
         },
     );
 
+    it.each(["--pastel-lilac", "--pastel-butter", "--pastel-mint", "--pastel-pink"])(
+        "muted on-pastel ink reaches 4.5:1 on %s in dark mode",
+        (fill) => {
+            expect(
+                contrast(dark, "--text-on-pastel-muted", fill),
+            ).toBeGreaterThanOrEqual(4.5);
+        },
+    );
+
     it("on-accent text reaches 4.5:1 on coral in dark mode", () => {
         expect(
             contrast(dark, "--text-on-accent", "--accent-coral"),
@@ -90,6 +99,9 @@ describe("theme contrast tokens", () => {
     it("keeps light mode colours unchanged", () => {
         expect(resolve(light, "--text-on-pastel")).toBe(
             resolve(light, "--text-ink"),
+        );
+        expect(resolve(light, "--text-on-pastel-muted")).toBe(
+            resolve(light, "--text-muted"),
         );
         expect(resolve(light, "--text-on-accent").toLowerCase()).toBe(
             "#ffffff",
