@@ -4,11 +4,16 @@ import {
     fireEvent,
     waitFor,
     within,
+    configure,
 } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { App, AppShell } from "../src/App";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { MemoryRouter } from "react-router-dom";
+
+// The first render of a route also loads its lazy page chunk, which can outlast
+// the 1s default of waitFor/findBy* on a busy machine.
+configure({ asyncUtilTimeout: 10000 });
 
 // Mock recharts ResponsiveContainer so chart elements render safely in jsdom
 vi.mock("recharts", async (importOriginal) => {
@@ -73,21 +78,16 @@ describe("App Integration & Routing", () => {
     it("navigates to /spend and defaults to expenses ledger", async () => {
         render(<App initialEntries={["/spend"]} />);
 
-        await waitFor(
-            () => {
-                const main = screen.getByRole("main");
-                expect(
-                    within(main).getByText(/Unsettled/i),
-                ).toBeInTheDocument();
-                expect(
-                    within(main).getByRole("tab", { name: /Expenses/i }),
-                ).toHaveAttribute("aria-selected", "true");
-                expect(
-                    within(main).getByRole("tab", { name: /Budget/i }),
-                ).toHaveAttribute("aria-selected", "false");
-            },
-            { timeout: 5000 },
-        );
+        await waitFor(() => {
+            const main = screen.getByRole("main");
+            expect(within(main).getByText(/Unsettled/i)).toBeInTheDocument();
+            expect(
+                within(main).getByRole("tab", { name: /Expenses/i }),
+            ).toHaveAttribute("aria-selected", "true");
+            expect(
+                within(main).getByRole("tab", { name: /Budget/i }),
+            ).toHaveAttribute("aria-selected", "false");
+        });
     });
 
     it("navigates to /spend?tab=budget and activates budget sub-tab", async () => {
@@ -124,53 +124,46 @@ describe("App Integration & Routing", () => {
         });
     });
 
-    it("navigates to /accounts, /goals, /loans, and /recurring routes", async () => {
-        const { unmount: unmountAccounts } = render(
-            <App initialEntries={["/accounts"]} />,
-        );
-        await waitFor(() => {
-            const main = screen.getByRole("main");
-            expect(
-                within(main).getByRole("heading", { name: /^Accounts$/i }),
-            ).toBeInTheDocument();
-        });
-        unmountAccounts();
+    it.each<[string, (main: HTMLElement) => void]>([
+        [
+            "/accounts",
+            (main) => {
+                expect(
+                    within(main).getByRole("heading", { name: /^Accounts$/i }),
+                ).toBeInTheDocument();
+            },
+        ],
+        [
+            "/goals",
+            (main) => {
+                expect(
+                    within(main).getByTestId("roadmap-card"),
+                ).toBeInTheDocument();
+                expect(
+                    within(main).getByRole("tab", { name: /Active/i }),
+                ).toHaveAttribute("aria-selected", "true");
+            },
+        ],
+        [
+            "/loans",
+            (main) => {
+                expect(
+                    within(main).getByText("Under Construction"),
+                ).toBeInTheDocument();
+            },
+        ],
+        [
+            "/recurring",
+            (main) => {
+                expect(
+                    within(main).getByText(/All Recurring/i),
+                ).toBeInTheDocument();
+            },
+        ],
+    ])("navigates to %s", async (route, expectPage) => {
+        render(<App initialEntries={[route]} />);
 
-        const { unmount: unmountGoals } = render(
-            <App initialEntries={["/goals"]} />,
-        );
-        await waitFor(() => {
-            const main = screen.getByRole("main");
-            expect(
-                within(main).getByTestId("roadmap-card"),
-            ).toBeInTheDocument();
-            expect(
-                within(main).getByRole("tab", { name: /Active/i }),
-            ).toHaveAttribute("aria-selected", "true");
-        });
-        unmountGoals();
-
-        const { unmount: unmountLoans } = render(
-            <App initialEntries={["/loans"]} />,
-        );
-        await waitFor(() => {
-            const main = screen.getByRole("main");
-            expect(
-                within(main).getByText("Under Construction"),
-            ).toBeInTheDocument();
-        });
-        unmountLoans();
-
-        const { unmount: unmountRecurring } = render(
-            <App initialEntries={["/recurring"]} />,
-        );
-        await waitFor(() => {
-            const main = screen.getByRole("main");
-            expect(
-                within(main).getByText(/All Recurring/i),
-            ).toBeInTheDocument();
-        });
-        unmountRecurring();
+        await waitFor(() => expectPage(screen.getByRole("main")));
     });
 
     it("switches financial perspective from the header dropdown", async () => {
