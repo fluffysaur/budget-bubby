@@ -42,6 +42,9 @@ export function matchesExpenseFilter(
     if (filter.payerId && expense.payer_id !== filter.payerId) return false;
     if (filter.isShared !== undefined && expense.is_shared !== filter.isShared)
         return false;
+    if (filter.settled !== undefined && expense.settled !== filter.settled)
+        return false;
+    if (filter.goalId && expense.goal_id !== filter.goalId) return false;
     if (filter.tag) {
         const target = normalizeExpenseTag(filter.tag).toLowerCase();
         if (

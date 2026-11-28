@@ -296,4 +296,30 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
             }),
         ).not.toBeInTheDocument();
     });
+
+    it("shows a sort chip for a non-default sort and its × restores the default", async () => {
+        render(
+            <ExpenseListTable
+                expenses={[]}
+                categories={mockCategories}
+                members={mockMembers}
+                filter={{}}
+                onFilterChange={vi.fn()}
+            />,
+        );
+        expect(
+            screen.queryByRole("button", { name: /Remove filter Sort/ }),
+        ).not.toBeInTheDocument();
+
+        const sortSelects = screen.getAllByRole("combobox", {
+            name: /sort ledger/i,
+        });
+        await selectOption(sortSelects[0], /Lowest/);
+        expect(screen.getByText("Sort: Lowest")).toBeInTheDocument();
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "Remove filter Sort: Lowest" }),
+        );
+        expect(screen.queryByText("Sort: Lowest")).not.toBeInTheDocument();
+    });
 });

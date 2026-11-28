@@ -4,6 +4,10 @@ test.describe("Credit Card Paid Cycle Sync", () => {
     test("syncs paid status between Credit Cards tab and Home widget", async ({
         page,
     }) => {
+        // Seed statements are for Oct 2026. Pin "today" before OCBC's next
+        // billing day, otherwise the current cycle has no logged statement.
+        await page.clock.setFixedTime(new Date("2026-11-20T12:00:00+08:00"));
+
         await page.goto("/accounts");
         await page.getByRole("tab", { name: /Credit Cards/ }).click();
 
