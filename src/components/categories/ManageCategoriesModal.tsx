@@ -886,7 +886,7 @@ export function ManageCategoriesModal({
                                                     }
                                                     className={`cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
                                                         ownerMemberId === null
-                                                            ? "border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                                            ? "border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-on-pastel) shadow-cute-sm"
                                                             : "border border-(--border-subtle) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
                                                     }`}
                                                 >
@@ -908,7 +908,7 @@ export function ManageCategoriesModal({
                                                         className={`cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
                                                             ownerMemberId ===
                                                             m.id
-                                                                ? "border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                                                ? "border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-on-pastel) shadow-cute-sm"
                                                                 : "border border-(--border-subtle) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
                                                         }`}
                                                     >

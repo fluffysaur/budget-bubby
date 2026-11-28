@@ -809,7 +809,7 @@ export function BudgetEditorModal({
                                     onClick={() => onSelectMember?.(m.id)}
                                     className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-press cursor-pointer ${
                                         isSelected
-                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                            ? "bg-(--pastel-butter) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm"
                                             : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)"
                                     }`}
                                 >
@@ -950,7 +950,7 @@ export function BudgetEditorModal({
                                     <button
                                         type="button"
                                         onClick={handleOpenCreateCategory}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-on-pastel) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer"
                                     >
                                         <Plus className="h-3 w-3" />
                                         <span>Add Category</span>
@@ -972,7 +972,7 @@ export function BudgetEditorModal({
                                     <button
                                         type="button"
                                         onClick={handleAutoBalance}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-(--text-on-pastel) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                         title="Auto-adjust unlocked categories to 100%"
                                     >
                                         <Scale className="h-3.5 w-3.5" />
@@ -1070,7 +1070,7 @@ export function BudgetEditorModal({
                                                             title={item.label}
                                                             className={`relative p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] border-2 border-(--border-ink) transition-press cursor-pointer ${
                                                                 isSelected
-                                                                    ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
+                                                                    ? "bg-(--pastel-mint) text-(--text-on-pastel) shadow-cute-sm"
                                                                     : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
                                                             }`}
                                                         >
@@ -1087,7 +1087,7 @@ export function BudgetEditorModal({
                                             type="button"
                                             onClick={handleSaveCategoryInline}
                                             disabled={isCatSaving}
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-(--text-on-pastel) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 cursor-pointer"
                                         >
                                             <Check className="h-3.5 w-3.5" />
                                             <span>
@@ -1113,7 +1113,7 @@ export function BudgetEditorModal({
                                         <button
                                             type="button"
                                             onClick={handleOpenCreateCategory}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-(--text-on-pastel) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer"
                                         >
                                             <Plus className="h-3 w-3" />
                                             <span>Add Category</span>
@@ -1171,7 +1171,7 @@ export function BudgetEditorModal({
                                                                 data-testid={`lock-${cat.id}`}
                                                                 className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-press cursor-pointer shrink-0 ${
                                                                     isLocked
-                                                                        ? "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
+                                                                        ? "bg-(--pastel-butter) text-(--text-on-pastel) shadow-cute-sm"
                                                                         : "bg-(--bg-cream) text-(--text-muted) hover:text-(--text-ink)"
                                                                 }`}
                                                             >
@@ -1212,7 +1212,7 @@ export function BudgetEditorModal({
                                                                     <button
                                                                         {...triggerProps}
                                                                         type="button"
-                                                                        className="relative after:absolute after:-inset-2.5 after:content-[''] text-2xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) px-2 py-0.5 rounded-full border border-(--border-ink) shadow-cute-sm cursor-pointer transition-colors"
+                                                                        className="relative after:absolute after:-inset-2.5 after:content-[''] text-2xs font-bold text-(--text-on-pastel) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) px-2 py-0.5 rounded-full border border-(--border-ink) shadow-cute-sm cursor-pointer transition-colors"
                                                                     >
                                                                         Locked
                                                                     </button>
@@ -1236,7 +1236,7 @@ export function BudgetEditorModal({
                                                                     disabled={
                                                                         isCatSaving
                                                                     }
-                                                                    className="px-2 py-0.5 rounded text-2xs font-bold bg-(--pastel-coral-light) text-rose-800 border border-(--border-ink) hover:bg-rose-200 cursor-pointer"
+                                                                    className="px-2 py-0.5 rounded text-2xs font-bold bg-(--pastel-coral-light) text-rose-800 dark:text-(--accent-coral-ink) border border-(--border-ink) hover:bg-rose-200 cursor-pointer"
                                                                 >
                                                                     Delete
                                                                 </button>
@@ -1453,7 +1453,7 @@ export function BudgetEditorModal({
                             <div
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 border-(--border-ink) shadow-cute-sm ${
                                     isValidTotal
-                                        ? "bg-(--pastel-mint) text-(--text-ink)"
+                                        ? "bg-(--pastel-mint) text-(--text-on-pastel)"
                                         : "bg-(--pastel-coral-light) text-(--text-ink)"
                                 }`}
                             >

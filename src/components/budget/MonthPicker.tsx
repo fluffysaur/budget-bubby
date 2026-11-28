@@ -238,9 +238,9 @@ export function MonthPicker({
                                             aria-label={`Select ${monthName} ${navYear}`}
                                             className={`h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                                                 isSelected
-                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                                    ? "bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm"
                                                     : isTodayMonth
-                                                      ? "bg-(--pastel-mint) text-(--text-ink) border border-(--border-ink) hover:bg-(--pastel-mint-dark)"
+                                                      ? "bg-(--pastel-mint) text-(--text-on-pastel) border border-(--border-ink) hover:bg-(--pastel-mint-dark)"
                                                       : "bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) hover:bg-(--pastel-butter-light)"
                                             }`}
                                         >
@@ -256,7 +256,7 @@ export function MonthPicker({
                                     type="button"
                                     onClick={handleJumpFromPopover}
                                     aria-label="Jump to current month from picker"
-                                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) bg-(--pastel-butter-light) text-(--text-ink) hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) bg-(--pastel-butter-light) text-(--text-ink) hover:bg-(--pastel-butter) hover:text-(--text-on-pastel) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                 >
                                     <RotateCcw className="h-3 w-3 shrink-0" />
                                     <span>Jump to Current Month</span>

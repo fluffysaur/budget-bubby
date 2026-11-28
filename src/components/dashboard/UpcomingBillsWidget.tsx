@@ -138,7 +138,7 @@ export const UpcomingBillsWidget = React.memo(function UpcomingBillsWidget({
             {/* Header */}
             <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-butter) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm">
                         <CalendarClock className="h-5 w-5" strokeWidth={2.5} />
                     </div>
                     <div className="min-w-0">

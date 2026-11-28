@@ -93,7 +93,7 @@ export function DeleteExpenseModal({
                     title="Delete Expense?"
                     icon={
                         <Trash2
-                            className="h-4.5 w-4.5 text-rose-600"
+                            className="h-4.5 w-4.5 text-rose-600 dark:text-current"
                             strokeWidth={2.5}
                         />
                     }
@@ -171,7 +171,7 @@ export function DeleteExpenseModal({
                                 title="Goal refunded"
                                 icon={
                                     <Target
-                                        className="h-4 w-4 text-amber-700"
+                                        className="h-4 w-4 text-amber-700 dark:text-current"
                                         strokeWidth={2.5}
                                     />
                                 }
@@ -187,7 +187,7 @@ export function DeleteExpenseModal({
                                 title="Settlement updates"
                                 icon={
                                     <ArrowRightLeft
-                                        className="h-4 w-4 text-purple-700"
+                                        className="h-4 w-4 text-purple-700 dark:text-current"
                                         strokeWidth={2.5}
                                     />
                                 }

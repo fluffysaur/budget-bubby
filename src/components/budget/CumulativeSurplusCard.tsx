@@ -309,7 +309,7 @@ export function CumulativeSurplusCard({
                         </div>
                     </div>
 
-                    <div className="p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm bg-(--pastel-butter) text-(--text-ink)">
+                    <div className="p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm bg-(--pastel-butter) text-(--text-on-pastel)">
                         <Sparkles className="h-5 w-5" />
                     </div>
                 </div>

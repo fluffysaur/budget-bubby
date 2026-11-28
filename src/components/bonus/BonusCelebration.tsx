@@ -71,7 +71,7 @@ export function BonusCelebration({
                     ))}
                 </div>
 
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) shadow-cute-sm">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-on-pastel) shadow-cute-sm">
                     <Sparkles className="h-4.5 w-4.5" />
                 </div>
 

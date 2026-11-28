@@ -59,7 +59,7 @@ export const PWAUpdateToast: React.FC = () => {
                                         onClick={() =>
                                             updateServiceWorker(true)
                                         }
-                                        className="px-3 py-1.5 text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) rounded-xl shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                        className="px-3 py-1.5 text-xs font-bold text-(--text-on-pastel) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) rounded-xl shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                     >
                                         Update
                                     </button>

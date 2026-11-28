@@ -504,7 +504,7 @@ export function RecurringTable({
                                                                     recurringItem,
                                                                 )
                                                             }
-                                                            className="relative p-1.5 rounded-lg after:absolute after:-inset-2 after:content-[''] border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                                            className="relative p-1.5 rounded-lg after:absolute after:-inset-2 after:content-[''] border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 dark:text-(--text-muted) hover:text-(--text-on-pastel) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                                             title="Edit recurring item"
                                                         >
                                                             <Pencil className="w-4 h-4" />

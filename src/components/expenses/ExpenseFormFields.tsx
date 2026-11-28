@@ -435,7 +435,7 @@ export function ExpenseFormFields({
                                         }
                                         className={`flex cursor-pointer items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-colors ${
                                             isSelected
-                                                ? "border-2 border-(--border-ink) bg-(--pastel-lilac) font-bold text-(--text-ink) shadow-cute-sm"
+                                                ? "border-2 border-(--border-ink) bg-(--pastel-lilac) font-bold text-(--text-on-pastel) shadow-cute-sm"
                                                 : "border border-(--border-subtle) bg-(--bg-canvas) font-medium text-(--text-ink) hover:bg-(--pastel-butter-light)"
                                         }`}
                                     >
@@ -472,7 +472,7 @@ export function ExpenseFormFields({
                                     }
                                     className={`flex cursor-pointer items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-colors ${
                                         isSelected
-                                            ? "border-2 border-(--border-ink) bg-(--pastel-lilac) font-bold text-(--text-ink) shadow-cute-sm"
+                                            ? "border-2 border-(--border-ink) bg-(--pastel-lilac) font-bold text-(--text-on-pastel) shadow-cute-sm"
                                             : "border border-(--border-subtle) bg-(--bg-canvas) font-medium text-(--text-ink) hover:bg-(--pastel-butter-light)"
                                     }`}
                                 >
@@ -544,7 +544,7 @@ export function ExpenseFormFields({
                         onClick={() => onChange({ isShared: false })}
                         className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-colors ${
                             !draft.isShared
-                                ? "border border-(--border-ink) bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
+                                ? "border border-(--border-ink) bg-(--pastel-butter) text-(--text-on-pastel) shadow-cute-sm"
                                 : "text-(--text-muted) hover:text-(--text-ink)"
                         }`}
                     >
@@ -557,7 +557,7 @@ export function ExpenseFormFields({
                         onClick={() => onChange({ isShared: true })}
                         className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-colors ${
                             draft.isShared
-                                ? "border border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                ? "border border-(--border-ink) bg-(--pastel-lilac) text-(--text-on-pastel) shadow-cute-sm"
                                 : "text-(--text-muted) hover:text-(--text-ink)"
                         }`}
                     >
@@ -584,7 +584,7 @@ export function ExpenseFormFields({
                             nowrap
                         />
                         {moreOptionsActiveCount > 0 && (
-                            <span className="shrink-0 rounded-full border border-(--border-ink) bg-(--pastel-butter) px-2 py-0.5 text-2xs font-bold text-(--text-ink)">
+                            <span className="shrink-0 rounded-full border border-(--border-ink) bg-(--pastel-butter) px-2 py-0.5 text-2xs font-bold text-(--text-on-pastel)">
                                 {moreOptionsActiveCount} active
                             </span>
                         )}
@@ -708,7 +708,7 @@ export function ExpenseFormFields({
                                                     }
                                                     className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${
                                                         isSelected
-                                                            ? "border-2 border-(--border-ink) bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
+                                                            ? "border-2 border-(--border-ink) bg-(--pastel-butter) text-(--text-on-pastel) shadow-cute-sm"
                                                             : "border border-(--border-subtle) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
                                                     }`}
                                                 >

@@ -111,7 +111,7 @@ export function RenewalCalendar({
             {/* Header: title + year stepper */}
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                    <div className="p-2 rounded-xl bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm">
                         <Calendar className="w-5 h-5" />
                     </div>
                     <h3 className="text-base font-bold text-(--text-ink) font-display">
@@ -190,7 +190,7 @@ export function RenewalCalendar({
                             <span
                                 className={`relative text-[11px] font-bold uppercase tracking-wider ${
                                     isCurrent
-                                        ? "px-1.5 rounded-full bg-(--pastel-mint) border-2 border-(--border-ink) text-(--text-ink)"
+                                        ? "px-1.5 rounded-full bg-(--pastel-mint) border-2 border-(--border-ink) text-(--text-on-pastel)"
                                         : "text-(--text-muted)"
                                 }`}
                             >

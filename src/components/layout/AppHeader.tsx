@@ -54,19 +54,19 @@ export interface AppHeaderProps {
 const MEMBER_COLOR_PALETTE = [
     {
         activeBg:
-            "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
+            "bg-(--pastel-butter) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
     {
         activeBg:
-            "bg-(--pastel-pink) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
+            "bg-(--pastel-pink) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
     {
         activeBg:
-            "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
+            "bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
     {
         activeBg:
-            "bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
+            "bg-(--pastel-mint) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
 ];
 
@@ -170,7 +170,7 @@ export function AppHeader({
                 memberId: null as string | null,
                 label: "Combined",
                 activeBg:
-                    "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
+                    "bg-(--pastel-lilac) text-(--text-on-pastel) border-2 border-(--border-ink) shadow-cute-sm font-bold",
             },
         ];
 
@@ -479,7 +479,7 @@ export function AppHeader({
                     {isMockMode && (
                         <div
                             title="Demo Mode"
-                            className="flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter) px-2.5 py-1 text-xs font-bold text-(--text-ink) shadow-cute-sm"
+                            className="flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter) px-2.5 py-1 text-xs font-bold text-(--text-on-pastel) shadow-cute-sm"
                         >
                             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse border border-(--border-ink)" />
                             <span className="hidden xs:inline">Demo Mode</span>
@@ -495,7 +495,7 @@ export function AppHeader({
                             aria-label="Open Bubby AI"
                             title="Bubby AI"
                             data-testid="open-bubby-chat-btn"
-                            className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1.5 sm:after:-inset-1 after:content-[''] border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-lilac) cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press"
+                            className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1.5 sm:after:-inset-1 after:content-[''] border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-lilac) hover:text-(--text-on-pastel) cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press"
                         >
                             <Sparkles
                                 className="h-4.5 w-4.5"

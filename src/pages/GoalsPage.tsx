@@ -397,7 +397,7 @@ export function GoalsPage({
                                     id: "in_progress",
                                     label: "Active",
                                     badge: (
-                                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-2xs font-mono-num font-bold">
+                                        <span className="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.5 text-2xs font-mono-num font-bold">
                                             {inProgressGoals.length}
                                         </span>
                                     ),
@@ -406,7 +406,7 @@ export function GoalsPage({
                                     id: "achieved",
                                     label: "Done",
                                     badge: (
-                                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-2xs font-mono-num font-bold">
+                                        <span className="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.5 text-2xs font-mono-num font-bold">
                                             {achievedGoals.length}
                                         </span>
                                     ),
@@ -415,7 +415,7 @@ export function GoalsPage({
                                     id: "all",
                                     label: "All",
                                     badge: (
-                                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-2xs font-mono-num font-bold">
+                                        <span className="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.5 text-2xs font-mono-num font-bold">
                                             {perspectiveGoals.length}
                                         </span>
                                     ),

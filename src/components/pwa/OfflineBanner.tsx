@@ -245,7 +245,7 @@ export const OfflineBanner: React.FC = () => {
                         <div
                             role="status"
                             aria-live="polite"
-                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-butter) text-(--text-ink) border-b-2 border-(--border-ink)"
+                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-butter) text-(--text-on-pastel) border-b-2 border-(--border-ink)"
                         >
                             <WifiOff className="w-3.5 h-3.5 shrink-0" />
                             <span>Offline</span>
@@ -274,7 +274,7 @@ export const OfflineBanner: React.FC = () => {
                         <div
                             role="status"
                             aria-live="polite"
-                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-lilac) text-(--text-ink) border-b-2 border-(--border-ink)"
+                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-lilac) text-(--text-on-pastel) border-b-2 border-(--border-ink)"
                         >
                             <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                             <span>Syncing...</span>

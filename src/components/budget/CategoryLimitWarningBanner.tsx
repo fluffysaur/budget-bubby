@@ -481,8 +481,8 @@ export const CategoryLimitWarningBanner = React.memo(
                                 <div
                                     className={`p-2 rounded-xl border border-(--border-ink) shadow-cute-sm shrink-0 ${
                                         toast.type === "covered"
-                                            ? "bg-(--pastel-mint-light) text-emerald-900"
-                                            : "bg-(--pastel-butter) text-(--text-ink)"
+                                            ? "bg-(--pastel-mint-light) text-emerald-900 dark:text-(--accent-mint-ink)"
+                                            : "bg-(--pastel-butter) text-(--text-on-pastel)"
                                     }`}
                                 >
                                     {toast.type === "covered" ? (
@@ -544,7 +544,7 @@ export const CategoryLimitWarningBanner = React.memo(
                                         className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm transition-colors"
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border border-(--border-ink) shrink-0 mt-0.5">
+                                            <div className="p-1.5 rounded-xl bg-(--accent-coral) text-(--text-on-accent) border border-(--border-ink) shrink-0 mt-0.5">
                                                 <AlertCircle
                                                     className="h-4 w-4"
                                                     strokeWidth={2.5}
@@ -626,7 +626,7 @@ export const CategoryLimitWarningBanner = React.memo(
                                         className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) dark:bg-(--bg-elevated) text-(--text-ink) shadow-cute-sm transition-colors"
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="p-1.5 rounded-xl bg-(--pastel-mint-light) text-emerald-900 border border-(--border-ink) shrink-0 mt-0.5">
+                                            <div className="p-1.5 rounded-xl bg-(--pastel-mint-light) text-emerald-900 dark:text-(--accent-mint-ink) border border-(--border-ink) shrink-0 mt-0.5">
                                                 <Shield
                                                     className="h-4 w-4"
                                                     strokeWidth={2.5}
@@ -710,7 +710,7 @@ export const CategoryLimitWarningBanner = React.memo(
                                         className="p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 shadow-cute-sm transition-colors"
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shrink-0 mt-0.5">
+                                            <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-on-pastel) border border-(--border-ink) shrink-0 mt-0.5">
                                                 <AlertTriangle
                                                     className="h-4 w-4"
                                                     strokeWidth={2.5}

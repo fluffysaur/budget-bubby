@@ -158,7 +158,7 @@ export function OnboardingModal({
                                 <span
                                     className={
                                         active
-                                            ? "rounded-full border-2 border-(--border-ink) bg-(--pastel-lilac) px-2.5 py-0.5 text-(--text-ink) shadow-cute-sm"
+                                            ? "rounded-full border-2 border-(--border-ink) bg-(--pastel-lilac) px-2.5 py-0.5 text-(--text-on-pastel) shadow-cute-sm"
                                             : passed
                                               ? "px-1 text-(--text-ink)"
                                               : "px-1 text-(--text-faint)"

@@ -451,7 +451,7 @@ export function GoalCard({
                     type="button"
                     onClick={() => onSpendFromGoal?.(goal)}
                     aria-label={`+ Spend from ${goal.title}`}
-                    className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-2 text-xs font-black shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
+                    className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-on-pastel) px-3 py-2 text-xs font-black shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
                 >
                     <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
                     <span>Spend</span>
@@ -476,10 +476,10 @@ export function GoalCard({
                         type="button"
                         onClick={() => onMarkDone?.(goal)}
                         aria-label={`Mark ${goal.title} done`}
-                        className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
+                        className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) hover:text-(--text-on-pastel) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
                     >
                         <CheckCircle2
-                            className="h-3.5 w-3.5 text-emerald-800 shrink-0"
+                            className="h-3.5 w-3.5 text-emerald-800 dark:text-current shrink-0"
                             strokeWidth={2.5}
                         />
                         <span>Done</span>
