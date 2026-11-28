@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.8.0](https://github.com/fluffysaur/budget-bubby/compare/v0.7.0...v0.8.0) (2026-11-28)
+
+
+### Features
+
+* **accounts:** brokerage-style rows with logos, change figures and reorder ([#297](https://github.com/fluffysaur/budget-bubby/issues/297)) ([36b55c9](https://github.com/fluffysaur/budget-bubby/commit/36b55c9e7154e0dbc2a29c9591382430b84072f5))
+* **expenses:** two stat cards, trend up top, tag chips above the list ([#316](https://github.com/fluffysaur/budget-bubby/issues/316)) ([be92b8f](https://github.com/fluffysaur/budget-bubby/commit/be92b8f49ee4246c373f92f064bbf890ff699460))
+* **roadmap:** goal-linked costs on Projection, Upcoming Changes on Recurring ([#309](https://github.com/fluffysaur/budget-bubby/issues/309)) ([762ea95](https://github.com/fluffysaur/budget-bubby/commit/762ea95a81b7e586ed7f64ada78da7bb7bc7e2a7))
+* **ui:** replace dot separators with hairline MetaList ([#318](https://github.com/fluffysaur/budget-bubby/issues/318)) ([fc7cb66](https://github.com/fluffysaur/budget-bubby/commit/fc7cb6617aa4b21120381c191f6685130a844267))
+
+
+### Bug Fixes
+
+* **ci:** run e2e in the Playwright container image ([#306](https://github.com/fluffysaur/budget-bubby/issues/306)) ([952163f](https://github.com/fluffysaur/budget-bubby/commit/952163fe9ed863076af5c5e15d05fba78df947bf))
+* **expenses:** fit pagination on phones, 10 per page, tidy filter bar ([#315](https://github.com/fluffysaur/budget-bubby/issues/315)) ([e9c0541](https://github.com/fluffysaur/budget-bubby/commit/e9c0541fed690fa2699e72439d47d0eabdb600e8))
+* **money:** cents on actual amounts, whole dollars on estimates ([#302](https://github.com/fluffysaur/budget-bubby/issues/302)) ([64c90c8](https://github.com/fluffysaur/budget-bubby/commit/64c90c8525143d1748363597abe50ed20fbc8136))
+* **recurring:** save items when goal link columns are missing ([#301](https://github.com/fluffysaur/budget-bubby/issues/301)) ([21491df](https://github.com/fluffysaur/budget-bubby/commit/21491df738e569aea76bb4d88dc1e2347c096c6f))
+* **rls:** reject references to another household's rows ([#300](https://github.com/fluffysaur/budget-bubby/issues/300)) ([3391035](https://github.com/fluffysaur/budget-bubby/commit/33910358dc74be0c6f4a9ba1aa46b70d1e546f5d))
+* **ui:** dark mode contrast for pastel fills, coral and picker icons ([#320](https://github.com/fluffysaur/budget-bubby/issues/320)) ([672bd72](https://github.com/fluffysaur/budget-bubby/commit/672bd72c02949101fee9b550905c771a32c96881))
+* **ui:** stop Settle Overdue covering the Card Payments title ([#307](https://github.com/fluffysaur/budget-bubby/issues/307)) ([8b44f95](https://github.com/fluffysaur/budget-bubby/commit/8b44f95164eb796ef66378a937042dba6f510932))
+
 ## [0.7.0](https://github.com/fluffysaur/budget-bubby/compare/v0.6.0...v0.7.0) (2026-11-26)
 
 
