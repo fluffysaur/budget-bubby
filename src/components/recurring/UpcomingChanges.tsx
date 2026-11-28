@@ -11,7 +11,7 @@ import {
     RECURRING_TYPE_ICONS,
 } from "../../lib/recurringItems";
 import type { UpcomingChange } from "../../lib/recurringUpcoming";
-import { Card, CurrencyText, TruncatedText } from "../ui";
+import { Card, CurrencyText, MetaList, TruncatedText } from "../ui";
 
 export function UpcomingChanges({ changes }: { changes: UpcomingChange[] }) {
     if (changes.length === 0) return null;
@@ -38,11 +38,13 @@ export function UpcomingChanges({ changes }: { changes: UpcomingChange[] }) {
                                     text={c.name}
                                     className="text-xs font-bold text-(--text-ink)"
                                 />
-                                <span className="text-[11px] text-(--text-muted)">
-                                    {c.kind === "starts" ? "starts" : "ends"}{" "}
-                                    {formatShortMonth(c.month)}
-                                    {isDeductionType(c.type) && " · deduction"}
-                                </span>
+                                <MetaList
+                                    className="text-[11px] text-(--text-muted)"
+                                    items={[
+                                        `${c.kind === "starts" ? "starts" : "ends"} ${formatShortMonth(c.month)}`,
+                                        isDeductionType(c.type) && "deduction",
+                                    ]}
+                                />
                             </span>
                             {/* A tax year ending is replaced by the next one,
                                 so it isn't shown as a saving. */}

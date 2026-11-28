@@ -11,6 +11,7 @@ import { Alert } from "../ui/Alert";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { TruncatedText } from "../ui/TruncatedText";
+import { MetaRule } from "../ui/MetaList";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { toSgtDateTime } from "../../lib/capture/sgTime";
 import type { ExpenseFormDraft } from "../../lib/expenseFormDraft";
@@ -133,9 +134,7 @@ export function InboxCard({
                                     className="min-w-0"
                                 />
                             )}
-                            {item.card_name && (
-                                <span className="shrink-0">·</span>
-                            )}
+                            {item.card_name && <MetaRule className="mx-0.5" />}
                             <span className="shrink-0">{dayLabel}</span>
                         </div>
                     </div>

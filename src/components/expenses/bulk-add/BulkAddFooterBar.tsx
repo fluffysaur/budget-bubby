@@ -12,7 +12,7 @@ interface BulkAddFooterBarProps {
     onSave: () => void;
 }
 
-/** `+ Row` and `Save N · S$total`. Lives in ModalFooter, so it never scrolls away. */
+/** `+ Row` and `Save S$total (N)`. Lives in ModalFooter, so it never scrolls away. */
 export function BulkAddFooterBar({
     summary,
     isSubmitting,
@@ -21,10 +21,8 @@ export function BulkAddFooterBar({
     onSave,
 }: BulkAddFooterBarProps) {
     const nothingToSave = summary.count === 0 && summary.invalidCount === 0;
-    const label =
-        summary.count > 0
-            ? `Save ${summary.count} · ${formatSGD(summary.totalSGD)}`
-            : "Save";
+    const hasRows = summary.count > 0;
+    const total = formatSGD(summary.totalSGD);
 
     return (
         <ModalFooter className="gap-2">
@@ -43,11 +41,25 @@ export function BulkAddFooterBar({
                 variant="primary"
                 size="md"
                 className="min-h-11 flex-1 sm:flex-none"
+                aria-label={
+                    hasRows ? `Save ${summary.count} for ${total}` : undefined
+                }
                 isLoading={isSubmitting}
                 disabled={nothingToSave || isSubmitting}
                 onClick={onSave}
+                rightIcon={
+                    hasRows ? (
+                        <span
+                            aria-hidden="true"
+                            data-testid="bulk-save-count"
+                            className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-(--border-ink) bg-(--bg-card) px-1.5 text-2xs font-black text-(--text-ink) font-mono-num"
+                        >
+                            {summary.count}
+                        </span>
+                    ) : undefined
+                }
             >
-                {label}
+                {hasRows ? `Save ${total}` : "Save"}
             </Button>
         </ModalFooter>
     );

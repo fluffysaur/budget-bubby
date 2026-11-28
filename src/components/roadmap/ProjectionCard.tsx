@@ -40,7 +40,13 @@ import {
 } from "../../lib/roadmap";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
 import type { RoadmapState } from "../../hooks/useRoadmap";
-import { CurrencyText, TooltipPopover, TruncatedText } from "../ui";
+import {
+    CurrencyText,
+    MetaFigure,
+    MetaList,
+    TooltipPopover,
+    TruncatedText,
+} from "../ui";
 
 export interface ProjectionCardProps {
     roadmap: RoadmapState;
@@ -83,7 +89,7 @@ function ChartTooltip({
                 {row.history === undefined && (
                     <span className="font-medium text-(--text-muted)">
                         {" "}
-                        · projected
+                        projected
                     </span>
                 )}
             </div>
@@ -101,7 +107,7 @@ function ChartTooltip({
 
 function lifeEventWhen(c: CashFlowChange): string {
     if (c.kind === "ends")
-        return `Ends · saves from ${formatShortMonth(c.startMonth)}`;
+        return `Ends, saves from ${formatShortMonth(c.startMonth)}`;
     return c.endMonth
         ? `${formatShortMonth(c.startMonth)} – ${formatShortMonth(c.endMonth)}`
         : `From ${formatShortMonth(c.startMonth)}`;
@@ -170,9 +176,10 @@ export function ProjectionCard({
                         <h3 className="font-display text-base font-black tracking-tight text-(--text-ink)">
                             Net Worth Projection
                         </h3>
-                        <p className="text-xs text-(--text-muted)">
-                            Excludes CPF · no investment returns
-                        </p>
+                        <MetaList
+                            className="text-xs text-(--text-muted)"
+                            items={["Excludes CPF", "No investment returns"]}
+                        />
                     </div>
                 </div>
                 <TooltipPopover
@@ -402,15 +409,26 @@ export function ProjectionCard({
                         to="/recurring"
                         className="flex min-h-11 items-center gap-1 text-xs font-bold text-(--text-muted) hover:text-(--text-ink)"
                     >
-                        <span className="min-w-0 flex-1">
-                            {otherLabel} · net {netSign(goalCosts.otherMonthly)}
-                            <CurrencyText
-                                formatted={formatSGD(
-                                    Math.abs(goalCosts.otherMonthly),
-                                )}
-                            />
-                            /mo
-                        </span>
+                        <MetaList
+                            className="min-w-0 flex-1"
+                            items={[
+                                otherLabel,
+                                <>
+                                    net{" "}
+                                    <MetaFigure>
+                                        {netSign(goalCosts.otherMonthly)}
+                                        <CurrencyText
+                                            formatted={formatSGD(
+                                                Math.abs(
+                                                    goalCosts.otherMonthly,
+                                                ),
+                                            )}
+                                        />
+                                        /mo
+                                    </MetaFigure>
+                                </>,
+                            ]}
+                        />
                         <ChevronRight
                             aria-hidden="true"
                             className="h-4 w-4 shrink-0"

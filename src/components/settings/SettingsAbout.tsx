@@ -5,6 +5,7 @@
 import { useState, useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { WhatsNewModal } from "../whatsNew/WhatsNewModal";
+import { MetaRule } from "../ui/MetaList";
 import { RELEASE_NOTES } from "../../data/releaseNotes";
 import { getVisibleReleaseNotes } from "../../lib/releaseNotes";
 import { APP_VERSION, GIT_SHA, formatAppVersion } from "../../lib/appVersion";
@@ -42,11 +43,11 @@ export function SettingsAbout() {
                     />
                     What's New
                 </button>
-                <span aria-hidden="true">·</span>
+                <MetaRule />
                 <a href="/privacy" className={LINK_CLASS}>
                     Privacy
                 </a>
-                <span aria-hidden="true">·</span>
+                <MetaRule />
                 <a href="/terms" className={LINK_CLASS}>
                     Terms
                 </a>

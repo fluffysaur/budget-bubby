@@ -89,7 +89,7 @@ export function FxRateField({
             : status.source === "live" && status.asOf
               ? `Rate as of ${formatAsOf(status.asOf)}`
               : status.asOf
-                ? `Offline rate · ${formatAsOf(status.asOf)}`
+                ? `Offline rate as of ${formatAsOf(status.asOf)}`
                 : "Offline rate";
 
     return (

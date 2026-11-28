@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { fullText } from "./helpers/fullText";
 import {
     render,
     screen,
@@ -135,8 +136,12 @@ describe("BonusLogPanel", () => {
         renderPanel();
 
         expect(
-            await screen.findByText("S$8,000.00 net · 1 bonus"),
-        ).toBeInTheDocument();
+            (
+                await screen.findAllByText(
+                    fullText(/^S\$8,000\.00 net, 1 bonus$/),
+                )
+            ).length,
+        ).toBeGreaterThan(0);
         const table = screen.getByTestId("bonus-ytd-table");
         expect(within(table).getAllByText("S$10,000.00")).not.toHaveLength(0);
         expect(within(table).getAllByText("S$8,000.00")).not.toHaveLength(0);

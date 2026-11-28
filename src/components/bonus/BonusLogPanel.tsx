@@ -22,6 +22,8 @@ import {
     StatCard,
     TruncatedText,
     QueryErrorAlert,
+    MetaList,
+    MetaFigure,
 } from "../ui";
 import { BonusAllocationCollapsible } from "../budget/BonusAllocationCollapsible";
 import { BonusRow } from "./BonusRow";
@@ -43,7 +45,6 @@ import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { financeService } from "../../services/financeService";
 import type { BaseBudgetProfile, BonusEvent } from "../../types/finance";
-import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 const EMPTY_BONUSES: BonusEvent[] = [];
 const EMPTY_PROFILES: BaseBudgetProfile[] = [];
@@ -53,7 +54,6 @@ export interface BonusLogPanelProps {
 }
 
 export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
-    const mask = useMoneyMask();
     const { members, activeMember, currentMember } = useHousehold();
     const {
         data: bonusData,
@@ -309,9 +309,30 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                             <CollapsibleSection
                                 key={group.year}
                                 title={String(group.year)}
-                                subtitle={mask(
-                                    `${formatSGD(group.totals.net)} net · ${group.totals.count} ${group.totals.count === 1 ? "bonus" : "bonuses"}`,
-                                )}
+                                subtitle={
+                                    <MetaList
+                                        items={[
+                                            <>
+                                                <MetaFigure>
+                                                    <CurrencyText
+                                                        amount={
+                                                            group.totals.net
+                                                        }
+                                                    />
+                                                </MetaFigure>{" "}
+                                                net
+                                            </>,
+                                            <>
+                                                <MetaFigure>
+                                                    {group.totals.count}
+                                                </MetaFigure>{" "}
+                                                {group.totals.count === 1
+                                                    ? "bonus"
+                                                    : "bonuses"}
+                                            </>,
+                                        ]}
+                                    />
+                                }
                                 icon={
                                     <Sparkles className="h-5 w-5 text-purple-700 dark:text-purple-300" />
                                 }

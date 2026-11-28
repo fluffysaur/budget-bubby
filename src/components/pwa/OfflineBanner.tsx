@@ -26,6 +26,7 @@ import {
     Card,
     Button,
     TruncatedText,
+    Badge,
 } from "../ui";
 import { formatSGD } from "../../lib/currency";
 import { m, AnimatePresence } from "motion/react";
@@ -203,7 +204,7 @@ export const OfflineBanner: React.FC = () => {
                                         ? err.message
                                         : "Could not refresh data.",
                             });
-                        });
+                    });
                 }
             }
         };
@@ -247,11 +248,16 @@ export const OfflineBanner: React.FC = () => {
                             className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-butter) text-(--text-ink) border-b-2 border-(--border-ink)"
                         >
                             <WifiOff className="w-3.5 h-3.5 shrink-0" />
-                            <span>
-                                {pendingCount > 0
-                                    ? `Offline · ${pendingCount} queued`
-                                    : "Offline"}
-                            </span>
+                            <span>Offline</span>
+                            {pendingCount > 0 && (
+                                <Badge
+                                    variant="slate"
+                                    size="sm"
+                                    className="font-mono-num"
+                                >
+                                    {pendingCount} queued
+                                </Badge>
+                            )}
                             {failedCount > 0 && (
                                 <button
                                     type="button"

@@ -1,6 +1,6 @@
 /**
  * RoadmapChip: the household plan on Home, as one full-width row.
- * Line 1: "Goals · On track" or "Goals · Short S$401/mo".
+ * Line 1: "Goals On track" or "Goals Short S$401/mo" (muted label, coloured verdict).
  * Line 2: the first short goal, or the next goal by date.
  * Hidden when there are no active goals.
  */
@@ -45,10 +45,7 @@ export function RoadmapChip({ onOpen, className = "" }: RoadmapChipProps) {
             </span>
             <span className="flex min-w-0 flex-1 flex-col text-left">
                 <span className="flex items-baseline gap-1.5 text-sm font-black text-(--text-ink)">
-                    <span>Goals</span>
-                    <span aria-hidden="true" className="text-(--text-muted)">
-                        ·
-                    </span>
+                    <span className="font-bold text-(--text-muted)">Goals</span>
                     <span
                         data-testid="roadmap-chip-verdict"
                         className={`font-mono-num ${

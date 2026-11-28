@@ -4,6 +4,7 @@ import { ChevronDown, History } from "lucide-react";
 import { Card } from "../ui/Card";
 import { CurrencyText } from "../ui/CurrencyText";
 import { TruncatedText } from "../ui/TruncatedText";
+import { MetaFigure, MetaList } from "../ui/MetaList";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { collapse } from "../../lib/motion";
 import type { HouseholdMember, SettleUp } from "../../types/finance";
@@ -64,13 +65,20 @@ export function SettleUpHistory({ settleUps, members }: SettleUpHistoryProps) {
                                         text={`${nameOf(s.payer_id)} → ${nameOf(s.payee_id)}`}
                                         className="text-sm font-semibold text-(--text-primary)"
                                     />
-                                    <p className="text-xs text-(--text-muted)">
-                                        {formatDisplayDate(s.settled_on)} ·{" "}
-                                        {s.expense_ids.length}{" "}
-                                        {s.expense_ids.length === 1
-                                            ? "expense"
-                                            : "expenses"}
-                                    </p>
+                                    <MetaList
+                                        className="text-xs text-(--text-muted)"
+                                        items={[
+                                            formatDisplayDate(s.settled_on),
+                                            <>
+                                                <MetaFigure>
+                                                    {s.expense_ids.length}
+                                                </MetaFigure>{" "}
+                                                {s.expense_ids.length === 1
+                                                    ? "expense"
+                                                    : "expenses"}
+                                            </>,
+                                        ]}
+                                    />
                                 </div>
                                 <CurrencyText
                                     amount={s.amount}

@@ -36,6 +36,7 @@ import { normalizeExpenseTag } from "../../lib/expenseFormDraft";
 import { ExpenseFormModal } from "./ExpenseFormModal";
 import { DeleteExpenseModal } from "./DeleteExpenseModal";
 import { TruncatedText } from "../ui/TruncatedText";
+import { MetaRule } from "../ui/MetaList";
 import { ExpenseRowsSkeleton } from "../ui/PageSkeletons";
 import { Select, type SelectOption } from "../ui/dropdown";
 import { AvatarDot } from "../ui/AvatarDot";
@@ -669,7 +670,7 @@ export function ExpenseListTable({
                                                           partnerCategory ? (
                                                             <span
                                                                 className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-2xs font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)"
-                                                                title={`${category.name} · ${partnerCategory.name}`}
+                                                                title={`${category.name} / ${partnerCategory.name}`}
                                                             >
                                                                 <span
                                                                     className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"
@@ -682,8 +683,10 @@ export function ExpenseListTable({
                                                                 <span>
                                                                     {
                                                                         category.name
-                                                                    }{" "}
-                                                                    ·{" "}
+                                                                    }
+                                                                </span>
+                                                                <MetaRule />
+                                                                <span>
                                                                     {
                                                                         partnerCategory.name
                                                                     }
