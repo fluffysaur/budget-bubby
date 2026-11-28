@@ -290,12 +290,14 @@ export interface RecurringMonthOutlay {
 
 /**
  * Cash due in each month of `year`, counting an item only in months where
- * it is active (start/end dates). Monthly items count every active month;
- * annual items count in their payment month.
+ * it is active (start/end dates, or the linked goal's start when `goalsById`
+ * is given). Monthly items count every active month; annual items count in
+ * their payment month.
  */
 export function buildYearOutlay(
     items: RecurringItem[],
     year: number,
+    goalsById?: ReadonlyMap<string, Pick<SavingsGoal, "target_date">>,
 ): RecurringMonthOutlay[] {
     return Array.from({ length: 12 }, (_, idx) => {
         const month = idx + 1;
@@ -305,7 +307,8 @@ export function buildYearOutlay(
         let total = 0;
 
         for (const item of items) {
-            if (!isRecurringItemActiveInMonth(item, monthKey)) continue;
+            if (!isRecurringItemActiveInMonth(item, monthKey, goalsById))
+                continue;
             if (item.frequency === "monthly") {
                 monthlyItems.push(item);
                 total += Number(item.amount) || 0;

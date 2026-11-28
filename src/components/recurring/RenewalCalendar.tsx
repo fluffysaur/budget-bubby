@@ -6,7 +6,8 @@
  *   proportion to its total versus the year's biggest month.
  * - The current month's label is highlighted; the tapped month is pressed in.
  * - Panel below lists the selected month's annual items, then monthly items.
- * - Items only count in months where they are active (start/end dates).
+ * - Items only count in months where they are active (start/end dates;
+ *   goal-linked items start relative to their goal's target date).
  */
 
 import { useMemo, useState } from "react";
@@ -27,7 +28,11 @@ import {
 import { TruncatedText } from "../ui/TruncatedText";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
-import type { RecurringItem, RecurringItemType } from "../../types/finance";
+import type {
+    RecurringItem,
+    RecurringItemType,
+    SavingsGoal,
+} from "../../types/finance";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 const TYPE_ICON_COLORS: Record<RecurringItemType, string> = {
@@ -40,6 +45,8 @@ const TYPE_ICON_COLORS: Record<RecurringItemType, string> = {
 
 export interface RenewalCalendarProps {
     recurringItems: RecurringItem[];
+    /** Goals that drive the start month of goal-linked items. */
+    goals?: Pick<SavingsGoal, "id" | "target_date">[];
     className?: string;
     /** Overrides "today" (Singapore time) for the current month and due labels. */
     referenceDate?: Date;
@@ -47,6 +54,7 @@ export interface RenewalCalendarProps {
 
 export function RenewalCalendar({
     recurringItems,
+    goals,
     className = "",
     referenceDate,
 }: RenewalCalendarProps) {
@@ -61,10 +69,10 @@ export function RenewalCalendar({
     const [year, setYear] = useState<number>(thisYear);
     const [selectedMonth, setSelectedMonth] = useState<number>(thisMonth);
 
-    const months = useMemo(
-        () => buildYearOutlay(recurringItems, year),
-        [recurringItems, year],
-    );
+    const months = useMemo(() => {
+        const goalsById = new Map(goals?.map((g) => [g.id, g]));
+        return buildYearOutlay(recurringItems, year, goalsById);
+    }, [recurringItems, goals, year]);
     const maxTotal = Math.max(...months.map((m) => m.total), 0);
     const selected = months[selectedMonth - 1];
     const isCurrentYear = year === thisYear;
