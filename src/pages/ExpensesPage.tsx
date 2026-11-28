@@ -3,22 +3,11 @@
  * Minimal, Ledger-First Spend Hub:
  * - PageHeader with '+ Bulk Add' and 'Add Expense'
  * - Compact summary strip: Spendable, Total Spent, Shared Spending, and Unsettled (with Settle Up)
- * - Mobile-friendly collapsible filter bar & responsive transaction ledger table right at the top
- * - Collapsible Spend Trends & Tags drawers below the ledger
+ * - Trend card and tag chips above the ledger, settle-up history below it
  */
 
 import { useState, useEffect, useMemo } from "react";
-import {
-    Receipt,
-    Plus,
-    ArrowRightLeft,
-    Scale,
-    CheckCircle2,
-    Tag,
-    ListPlus,
-    BarChart3,
-    PiggyBank,
-} from "lucide-react";
+import { Plus, Scale, CheckCircle2, ListPlus, PiggyBank } from "lucide-react";
 import { InboxShortcutButton } from "../components/inbox/InboxShortcutButton";
 import { useHousehold } from "../context/HouseholdContext";
 import {
@@ -39,6 +28,7 @@ import {
 import { useCategoriesQuery } from "../hooks/finance/categories";
 import {
     useExpensesQuery,
+    matchesExpenseFilter,
     useAllExpensesQuery,
     useAddExpenseMutation,
     useDeleteExpenseMutation,
@@ -48,7 +38,7 @@ import { useSettleUpsQuery } from "../hooks/finance/settleUps";
 import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
-import { formatSGD, formatSGDEstimate } from "../lib/currency";
+import { formatSGD } from "../lib/currency";
 import { normalizeExpenseTag } from "../lib/expenseFormDraft";
 import { addMonths, getCurrentMonth } from "../lib/dateUtils";
 import { useFollowCurrentMonth } from "../hooks/useCurrentMonth";
@@ -65,7 +55,8 @@ import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import { BulkAddExpenseModal } from "../components/expenses/BulkAddExpenseModal";
 import { ExpenseListTable } from "../components/expenses/ExpenseListTable";
 import { ExpenseTrendsCard } from "../components/expenses/ExpenseTrendsCard";
-import { SpendTagsOverviewCard } from "../components/expenses/SpendTagsOverviewCard";
+import { SpendTagChips } from "../components/expenses/SpendTagChips";
+import { ActiveTagSummary } from "../components/expenses/ActiveTagSummary";
 import { SettleUpHistory } from "../components/expenses/SettleUpHistory";
 import { MonthEndSweepBanner } from "../components/budget/MonthEndSweepBanner";
 import { BankSurplusModal } from "../components/budget/BankSurplusModal";
@@ -137,6 +128,17 @@ export function ExpensesPage({
         }
     }, [activeMember]);
 
+    // Stats, settlement and trends always cover the whole month: the month
+    // query carries no list filters (search, category, shared, tag). Only the
+    // personal view's active member scopes it, as before. The ledger narrows
+    // this same list client-side (see listExpenses).
+    const statsMonth = filter.month || currentMonth;
+    const statsPayerId = activeMember?.id;
+    const monthFilter = useMemo<ExpenseFilter>(
+        () => ({ month: statsMonth, payerId: statsPayerId }),
+        [statsMonth, statsPayerId],
+    );
+
     // TanStack Query Cached Data Hooks
     const {
         data: expensesData,
@@ -145,7 +147,7 @@ export function ExpensesPage({
         isError: expensesError,
         error: expensesErrorObj,
         refetch: refetchExpenses,
-    } = useExpensesQuery(filter);
+    } = useExpensesQuery(monthFilter);
     const { data: allExpensesData, isSuccess: allExpensesSuccess } =
         useAllExpensesQuery();
     const { data: recurringItemsData } = useRecurringItemsQuery();
@@ -273,6 +275,7 @@ export function ExpensesPage({
         const sum = expenses.reduce((acc, exp) => acc + exp.amount, 0);
         return Math.round(sum * 100) / 100;
     }, [expenses]);
+    const expenseCount = expenses.length;
 
     const totalShared = useMemo(() => {
         const sum = expenses
@@ -326,6 +329,54 @@ export function ExpensesPage({
             setSettleTargetIds(undefined);
         });
     };
+
+    const tagSourceExpenses =
+        allExpenses && allExpenses.length > 0 ? allExpenses : expenses;
+
+    const handleSelectTag = (tag: string) => {
+        const clean = normalizeExpenseTag(tag);
+        setFilter((prev) => ({
+            ...prev,
+            tag:
+                prev.tag &&
+                normalizeExpenseTag(prev.tag).toLowerCase() ===
+                    clean.toLowerCase()
+                    ? undefined
+                    : clean,
+        }));
+    };
+
+    const handleClearTag = () =>
+        setFilter((prev) => ({ ...prev, tag: undefined }));
+
+    // A selected tag spans every month: the ledger is fed from all-time
+    // expenses and shown without a month, while `filter.month` keeps the
+    // remembered month for stats, trends and for when the tag is cleared.
+    const isTagScope = Boolean(filter.tag);
+    const listFilter = useMemo<ExpenseFilter>(
+        () => (isTagScope ? { ...filter, month: undefined } : filter),
+        [filter, isTagScope],
+    );
+    // Tag scope and "all months" read all-time expenses; otherwise the
+    // whole-month list is narrowed client-side with the same matcher the
+    // service filters implement (order is preserved from the query).
+    const listExpenses = useMemo(() => {
+        if (isTagScope) {
+            return tagSourceExpenses
+                .filter((e) => matchesExpenseFilter(e, listFilter))
+                .sort((a, b) => b.date.localeCompare(a.date));
+        }
+        const source = listFilter.month ? expenses : tagSourceExpenses;
+        return source.filter((e) => matchesExpenseFilter(e, listFilter));
+    }, [isTagScope, tagSourceExpenses, listFilter, expenses]);
+
+    const handleListFilterChange = (next: ExpenseFilter) =>
+        setFilter((prev) => ({
+            ...next,
+            // The list is shown month-less while a tag is set; keep the
+            // remembered month unless the user explicitly picks one.
+            month: next.month ?? (isTagScope ? prev.month : undefined),
+        }));
 
     // Historical Expense Trends Calculation (6-month rolling averages & category benchmarks)
     const trendsSummary = useMemo(() => {
@@ -600,8 +651,8 @@ export function ExpensesPage({
                         : "space-y-5 transition-opacity"
                 }
             >
-                {/* 4-Metric Summary Strip: Spendable Remaining, Total Spent, Shared Spending, and Unsettled */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {/* 2-Card Summary Strip: Budget (Spendable) and Shared (Unsettled). Whole-month figures, never list filters. */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                     {/* Card 1: Spendable Remaining (Primary Card) */}
                     <StatCard
                         title="Spendable"
@@ -696,85 +747,73 @@ export function ExpensesPage({
                                             </span>
                                         </button>
                                     )}
+                                <p className="text-[11px] font-medium text-(--text-muted)">
+                                    <CurrencyText amount={totalSpent} /> spent ·{" "}
+                                    {expenseCount} expense
+                                    {expenseCount === 1 ? "" : "s"}
+                                </p>
                             </div>
                         }
                     />
 
-                    {/* Card 2: Total Spent */}
-                    <StatCard
-                        title="Spent"
-                        loading={isLoading}
-                        value={formatSGD(totalSpent)}
-                        subtitle={`${expenses.length} transaction${expenses.length === 1 ? "" : "s"}`}
-                        icon={<Receipt className="h-4 w-4" />}
-                        iconBg="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                    />
-
-                    {/* Card 3: Shared Spending */}
-                    <StatCard
-                        title="Shared"
-                        loading={isLoading}
-                        value={formatSGD(totalShared)}
-                        tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
-                        icon={<ArrowRightLeft className="h-4 w-4" />}
-                        iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
-                    />
-
-                    {/* Card 4: Unsettled Balance (Who Owes Whom) */}
-                    <StatCard
-                        title="Unsettled"
-                        loading={isLoading}
-                        value={formatSGD(settlement.netBalance)}
-                        subtitle={
-                            settlement.netBalance === 0
-                                ? "All settled"
-                                : settlement.debtorName &&
-                                    settlement.creditorName
-                                  ? `${settlement.debtorName} → ${settlement.creditorName}`
-                                  : settlement.settlementText
-                        }
-                        icon={
-                            settlement.netBalance === 0 ? (
-                                <CheckCircle2 className="h-4 w-4" />
-                            ) : (
-                                <Scale className="h-4 w-4" />
-                            )
-                        }
-                        iconBg={
-                            settlement.netBalance === 0
-                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                                : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                        }
-                        footer={
-                            settlement.netBalance > 0 && members.length >= 2 ? (
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => {
-                                        setSettleTargetIds(
-                                            settlement.expenseIds,
-                                        );
-                                        setIsSettleOpen(true);
-                                    }}
-                                    leftIcon={
-                                        <Scale
-                                            className="h-3.5 w-3.5"
-                                            strokeWidth={2.5}
-                                        />
-                                    }
-                                    className="mt-1"
-                                >
-                                    Settle Up
-                                </Button>
-                            ) : undefined
-                        }
-                    />
+                    {/* Card 2: Unsettled, with shared spending (needs 2+ members) */}
+                    {members.length >= 2 && (
+                        <StatCard
+                            title="Unsettled"
+                            loading={isLoading}
+                            tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
+                            value={formatSGD(settlement.netBalance)}
+                            subtitle={
+                                settlement.netBalance === 0
+                                    ? "All settled"
+                                    : settlement.debtorName &&
+                                        settlement.creditorName
+                                      ? `${settlement.debtorName} → ${settlement.creditorName}`
+                                      : settlement.settlementText
+                            }
+                            icon={
+                                settlement.netBalance === 0 ? (
+                                    <CheckCircle2 className="h-4 w-4" />
+                                ) : (
+                                    <Scale className="h-4 w-4" />
+                                )
+                            }
+                            iconBg={
+                                settlement.netBalance === 0
+                                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                    : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                            }
+                            footer={
+                                <div className="space-y-1.5 mt-1">
+                                    <p className="text-[11px] font-medium text-(--text-muted)">
+                                        <CurrencyText amount={totalShared} />{" "}
+                                        shared this month
+                                    </p>
+                                    {settlement.netBalance > 0 && (
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => {
+                                                setSettleTargetIds(
+                                                    settlement.expenseIds,
+                                                );
+                                                setIsSettleOpen(true);
+                                            }}
+                                            leftIcon={
+                                                <Scale
+                                                    className="h-3.5 w-3.5"
+                                                    strokeWidth={2.5}
+                                                />
+                                            }
+                                        >
+                                            Settle Up
+                                        </Button>
+                                    )}
+                                </div>
+                            }
+                        />
+                    )}
                 </div>
-
-                <SettleUpHistory
-                    settleUps={settleUpsData?.settleUps ?? EMPTY_SETTLE_UPS}
-                    members={members}
-                />
 
                 <ConfirmModal
                     isOpen={isSettleOpen}
@@ -791,86 +830,44 @@ export function ExpensesPage({
                     Mark shared expenses settled?
                 </ConfirmModal>
 
+                <ExpenseTrendsCard trends={trendsSummary} />
+
+                <SpendTagChips
+                    expenses={tagSourceExpenses}
+                    categories={categories}
+                    activeTag={filter.tag}
+                    onSelectTag={handleSelectTag}
+                />
+
+                {filter.tag && (
+                    <ActiveTagSummary
+                        tag={filter.tag}
+                        expenses={tagSourceExpenses}
+                        categories={categories}
+                        onClear={handleClearTag}
+                    />
+                )}
+
                 {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}
                 <ExpenseListTable
-                    expenses={expenses}
+                    expenses={listExpenses}
                     categories={categories}
                     members={members}
                     goals={goals}
                     perspective={perspective}
                     activeMemberId={activeMember?.id ?? null}
-                    filter={filter}
-                    onFilterChange={setFilter}
+                    filter={listFilter}
+                    onFilterChange={handleListFilterChange}
                     onResetFilters={handleResetFilters}
                     onDeleteExpense={handleDeleteExpense}
                     onExpenseSaved={handleExpenseAdded}
                     isLoading={isLoading}
                 />
 
-                {/* Collapsible Secondary Drawers: Spend Trends & Tags */}
-                <div className="space-y-3 pt-2">
-                    <CollapsibleSection
-                        title="Spend Trends"
-                        summaryRight={`3-mo avg: ${formatSGDEstimate(trendsSummary.rolling3MonthAvg)}`}
-                        icon={
-                            <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        }
-                        defaultOpen={false}
-                    >
-                        <ExpenseTrendsCard
-                            trends={trendsSummary}
-                            perspectiveLabel={
-                                perspective === "household"
-                                    ? "Household"
-                                    : activeMember?.display_name || "Personal"
-                            }
-                        />
-                    </CollapsibleSection>
-
-                    <CollapsibleSection
-                        title="Tags & Trips"
-                        badge={
-                            filter.tag ? (
-                                <span className="px-2 py-0.5 rounded-full text-2xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-                                    #{normalizeExpenseTag(filter.tag)}
-                                </span>
-                            ) : undefined
-                        }
-                        icon={
-                            <Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        }
-                        defaultOpen={Boolean(filter.tag)}
-                    >
-                        <SpendTagsOverviewCard
-                            expenses={
-                                allExpenses && allExpenses.length > 0
-                                    ? allExpenses
-                                    : expenses
-                            }
-                            categories={categories}
-                            activeTag={filter.tag}
-                            onSelectTag={(tag) => {
-                                const clean = normalizeExpenseTag(tag);
-                                setFilter((prev) => ({
-                                    ...prev,
-                                    tag:
-                                        prev.tag &&
-                                        normalizeExpenseTag(
-                                            prev.tag,
-                                        ).toLowerCase() === clean.toLowerCase()
-                                            ? undefined
-                                            : clean,
-                                }));
-                            }}
-                            onClearTag={() =>
-                                setFilter((prev) => ({
-                                    ...prev,
-                                    tag: undefined,
-                                }))
-                            }
-                        />
-                    </CollapsibleSection>
-                </div>
+                <SettleUpHistory
+                    settleUps={settleUpsData?.settleUps ?? EMPTY_SETTLE_UPS}
+                    members={members}
+                />
             </div>
 
             {/* Bulk Add Expense Modal */}

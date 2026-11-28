@@ -3,14 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import {
-    render,
-    screen,
-    fireEvent,
-    waitFor,
-    within,
-} from "@testing-library/react";
-import { SpendTagsOverviewCard } from "../src/components/expenses/SpendTagsOverviewCard";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { SpendTagChips } from "../src/components/expenses/SpendTagChips";
 import { GoalCard } from "../src/components/goals/GoalCard";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { financeService } from "../src/services/financeService";
@@ -36,135 +30,6 @@ const testMembers: HouseholdMember[] = [
         role: "member",
     },
 ];
-
-describe("Spend Tags Overview Card", () => {
-    const sampleExpenses: Expense[] = [
-        {
-            id: "e1",
-            household_id: "hh-1",
-            payer_id: "mem-1",
-            category_id: "cat-food",
-            date: "2026-10-01",
-            item: "Pho & Banh Mi",
-            amount: 45.0,
-            is_shared: true,
-            split_ratio: 0.5,
-            settled: true,
-            tags: ["Vietnam Trip"],
-        },
-        {
-            id: "e2",
-            household_id: "hh-1",
-            payer_id: "mem-1",
-            category_id: "cat-transport",
-            date: "2026-10-02",
-            item: "Grab from Da Nang Airport",
-            amount: 25.0,
-            is_shared: true,
-            split_ratio: 0.5,
-            settled: true,
-            tags: ["Vietnam Trip"],
-        },
-        {
-            id: "e3",
-            household_id: "hh-1",
-            payer_id: "mem-2",
-            category_id: "cat-lifestyle",
-            date: "2026-10-05",
-            item: "Kitchen Island Carpentry",
-            amount: 1500.0,
-            is_shared: true,
-            split_ratio: 0.5,
-            settled: true,
-            tags: ["Home Reno"],
-        },
-        {
-            id: "e4",
-            household_id: "hh-1",
-            payer_id: "mem-1",
-            category_id: "cat-lifestyle",
-            date: "2026-10-08",
-            item: "Wedding Bands Downpayment",
-            amount: 2000.0,
-            is_shared: true,
-            split_ratio: 0.5,
-            settled: true,
-            tags: ["Wedding"],
-            goal_id: "goal-wedding",
-        },
-    ];
-
-    it("aggregates total spend and transaction counts by tag across categories", () => {
-        render(<SpendTagsOverviewCard expenses={sampleExpenses} />);
-
-        // Header
-        expect(screen.getByText("Tags")).toBeInTheDocument();
-        expect(screen.getByText("3 tags")).toBeInTheDocument();
-
-        // Vietnam Trip: 45.0 + 25.0 = 70.0 (2 txs)
-        const vietnamCard = screen.getByTestId("tag-card-Vietnam Trip");
-        expect(
-            within(vietnamCard).getByText("Vietnam Trip"),
-        ).toBeInTheDocument();
-        expect(
-            within(vietnamCard).getAllByText(formatSGD(70.0)).length,
-        ).toBeGreaterThan(0);
-        expect(within(vietnamCard).getByText("2 txs")).toBeInTheDocument();
-
-        // Home Reno: 1500.0 (1 tx)
-        const renoCard = screen.getByTestId("tag-card-Home Reno");
-        expect(within(renoCard).getByText("Home Reno")).toBeInTheDocument();
-        expect(
-            within(renoCard).getAllByText(formatSGD(1500.0)).length,
-        ).toBeGreaterThan(0);
-
-        // Wedding: 2000.0 (1 tx)
-        const weddingCard = screen.getByTestId("tag-card-Wedding");
-        expect(within(weddingCard).getByText("Wedding")).toBeInTheDocument();
-        expect(
-            within(weddingCard).getAllByText(formatSGD(2000.0)).length,
-        ).toBeGreaterThan(0);
-    });
-
-    it("triggers onSelectTag when a tag filter button is clicked", () => {
-        const onSelectTag = vi.fn();
-        render(
-            <SpendTagsOverviewCard
-                expenses={sampleExpenses}
-                onSelectTag={onSelectTag}
-            />,
-        );
-
-        const filterVietnamBtn = screen.getByRole("button", {
-            name: "Filter by Vietnam Trip",
-        });
-        fireEvent.click(filterVietnamBtn);
-
-        expect(onSelectTag).toHaveBeenCalledWith("Vietnam Trip");
-    });
-
-    it("displays active filter state and clear button when activeTag is supplied", () => {
-        const onClearTag = vi.fn();
-        render(
-            <SpendTagsOverviewCard
-                expenses={sampleExpenses}
-                activeTag="Vietnam Trip"
-                onClearTag={onClearTag}
-            />,
-        );
-
-        expect(
-            screen.getByText("Filtering by #Vietnam Trip"),
-        ).toBeInTheDocument();
-
-        const clearBtn = screen.getByRole("button", {
-            name: "Clear tag filter",
-        });
-        fireEvent.click(clearBtn);
-
-        expect(onClearTag).toHaveBeenCalled();
-    });
-});
 
 describe("Big-Ticket Goals Sinking Fund & Drawdown", () => {
     beforeEach(() => {
@@ -363,15 +228,18 @@ describe("Big-Ticket Goals Sinking Fund & Drawdown", () => {
         ];
 
         render(
-            <SpendTagsOverviewCard
+            <SpendTagChips
                 expenses={mixedExpenses}
                 activeTag="#BaliTrip"
+                onSelectTag={vi.fn()}
             />,
         );
 
-        expect(screen.getByText("1 tag")).toBeInTheDocument();
-        expect(screen.getByTestId("tag-card-BaliTrip")).toBeInTheDocument();
-        expect(screen.getByText("Filtering by #BaliTrip")).toBeInTheDocument();
+        expect(screen.getAllByRole("button")).toHaveLength(1);
+        expect(screen.getByTestId("tag-chip-BaliTrip")).toHaveAttribute(
+            "aria-pressed",
+            "true",
+        );
         expect(screen.queryByText(/##/)).not.toBeInTheDocument();
     });
 });
