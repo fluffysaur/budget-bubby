@@ -321,6 +321,7 @@ export function RecurringPage({
                             <Card variant="white" padding="md">
                                 <RenewalCalendar
                                     recurringItems={inScopeItems}
+                                    goals={goals}
                                 />
                             </Card>
 
