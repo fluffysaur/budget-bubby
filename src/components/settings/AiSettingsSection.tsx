@@ -41,6 +41,7 @@ import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Input } from "../ui/Input";
+import { MetaList } from "../ui/MetaList";
 import { Select } from "../ui/dropdown";
 import { feedback as delightFeedback } from "../../lib/delight/feedback";
 
@@ -296,9 +297,11 @@ export function AiSettingsSection({
         <CollapsibleSection
             title="Bubby AI"
             subtitle={
-                isConfigured
-                    ? `${providerMeta.label} · Stored locally`
-                    : "Bring your own key"
+                isConfigured ? (
+                    <MetaList items={[providerMeta.label, "Stored locally"]} />
+                ) : (
+                    "Bring your own key"
+                )
             }
             badge={isConfigured ? providerMeta.label : "Not Set"}
             badgeVariant={isConfigured ? "mint" : "slate"}
@@ -338,9 +341,18 @@ export function AiSettingsSection({
                                         className="h-4 w-4 shrink-0 text-(--text-ink)"
                                         strokeWidth={2.5}
                                     />
-                                    <span className="text-xs font-bold text-(--text-ink) truncate">
-                                        OpenRouter connected · Stored locally
-                                    </span>
+                                    <MetaList
+                                        className="text-xs font-bold text-(--text-ink)"
+                                        items={[
+                                            "OpenRouter connected",
+                                            <span
+                                                key="local"
+                                                className="font-medium text-(--text-muted)"
+                                            >
+                                                Stored locally
+                                            </span>,
+                                        ]}
+                                    />
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                     <Button

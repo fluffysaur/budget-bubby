@@ -161,7 +161,7 @@ describe("AiSettingsSection", () => {
         );
         expect(
             screen.getByTestId("openrouter-connected-status"),
-        ).toHaveTextContent(/OpenRouter connected · Stored locally/);
+        ).toHaveTextContent(/OpenRouter connected, Stored locally/);
 
         fireEvent.click(screen.getByTestId("reconnect-openrouter-btn"));
         expect(oauthSpy).toHaveBeenCalledWith("settings", "/");

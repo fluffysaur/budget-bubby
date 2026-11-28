@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { fullText } from "./helpers/fullText";
 import {
     render,
     screen,
@@ -76,8 +77,12 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
         expect(
             screen.getByTestId("credit-card-period-label"),
         ).toHaveTextContent("Current");
-        expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
-        expect(screen.getAllByText(/Pending · Sept? 2026/)).toHaveLength(2);
+        expect(
+            screen.getByText(fullText(/^Statement Oct 2026$/)),
+        ).toBeInTheDocument();
+        expect(
+            screen.getAllByText(fullText(/^Pending Sept? 2026$/)),
+        ).toHaveLength(2);
 
         // Step < into October 2026 month history -> all 3 show October statements
         fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
@@ -85,7 +90,7 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
             screen.getByTestId("credit-card-period-label"),
         ).toHaveTextContent("October 2026");
         expect(
-            screen.queryByText(/Pending · Sept? 2026/),
+            screen.queryByText(fullText(/^Pending Sept? 2026$/)),
         ).not.toBeInTheDocument();
         expect(screen.getAllByText("Statement")).toHaveLength(3);
 
@@ -94,8 +99,12 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
         expect(
             screen.getByTestId("credit-card-period-label"),
         ).toHaveTextContent("Current");
-        expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
-        expect(screen.getAllByText(/Pending · Sept? 2026/)).toHaveLength(2);
+        expect(
+            screen.getByText(fullText(/^Statement Oct 2026$/)),
+        ).toBeInTheDocument();
+        expect(
+            screen.getAllByText(fullText(/^Pending Sept? 2026$/)),
+        ).toHaveLength(2);
     });
 
     it("syncs paid and unpaid status bidirectionally between Credit Cards tab and Home widget across different billing days", async () => {
@@ -162,8 +171,12 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
                 screen.getByTestId(`cc-cycle-${cardLate.id}:2026-10`),
             ).toBeInTheDocument();
         });
-        expect(screen.getByText("Statement · Nov 2026")).toBeInTheDocument();
-        expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
+        expect(
+            screen.getByText(fullText(/^Statement Nov 2026$/)),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(fullText(/^Statement Oct 2026$/)),
+        ).toBeInTheDocument();
 
         // 1. Mark Late Cycle Card paid in Credit Cards tab -> disappears from Home widget
         fireEvent.click(

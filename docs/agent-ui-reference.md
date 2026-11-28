@@ -72,6 +72,7 @@ Never roll custom raw containers, ad-hoc dialogs, or handwritten alert boxes whe
 - **Cents vs whole dollars**: actual amounts use `formatSGD` (cents). Plans, estimates, averages, limits and shortfalls use `formatSGDEstimate` (whole dollars; shortfalls via `ceilToDollar`). Goal targets use `formatSGDTarget`. `formatSGDCompact` only on chart axes.
 - **Tooltips & Popovers**: Always `<TooltipPopover />` for definitions or contextual calculations.
 - **Overflow Protection**: Always wrap dynamic labels with `<TruncatedText text={...} />`.
+- **No `·` separators**: Never join facts with ` · `. For a row of facts use `<MetaList items={[...]} />` (1px hairline rules, wraps without stray rules, `nowrap` for one-line headers) with `<MetaFigure>` around the numbers. For label + value use a muted label and a bold value (`Statement <span className="text-(--text-ink)">Oct</span>`), not `Statement · Oct`. In single-line flex rows or pills use `<MetaRule />`. Counts on buttons and banners go in a small badge, not after a dot. Plain-text-only strings (`title=`, `aria-label`) use `/`, `,` or `for`.
 
 ### C. Shared Utilities, Constants & Logic (Zero Redundancy)
 

@@ -266,7 +266,7 @@ describe("Offline-First Sync Queue & Fast Lazy Loading", () => {
             });
 
             expect(screen.getByRole("status")).toBeInTheDocument();
-            expect(screen.getByText("Offline · 3 queued")).toBeInTheDocument();
+            expect(screen.getByText("3 queued")).toBeInTheDocument();
         });
 
         it("formats singular expense when pendingCount is 1", async () => {
@@ -289,7 +289,7 @@ describe("Offline-First Sync Queue & Fast Lazy Loading", () => {
                 render(<OfflineBanner />);
             });
 
-            expect(screen.getByText("Offline · 1 queued")).toBeInTheDocument();
+            expect(screen.getByText("1 queued")).toBeInTheDocument();
         });
 
         it('shows confirmation pill "✓ All changes synced to Supabase" when reconnecting', async () => {

@@ -9,6 +9,7 @@ import {
 import { Badge, type BadgeVariant } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { BubbyIcon } from "../ui/BubbyIcon";
+import { MetaList } from "../ui/MetaList";
 import { MONTH_NAMES_SHORT } from "../../lib/dateUtils";
 import type { ReleaseNote, ReleaseNoteTag } from "../../lib/releaseNotes";
 
@@ -90,10 +91,14 @@ export function WhatsNewModal({
                                 >
                                     {note.headline ?? `v${note.version}`}
                                 </h3>
-                                <span className="shrink-0 text-xs font-bold text-(--text-muted) font-mono-num">
-                                    v{note.version} ·{" "}
-                                    {formatNoteDate(note.date)}
-                                </span>
+                                <MetaList
+                                    className="shrink-0 text-xs font-bold text-(--text-muted) font-mono-num"
+                                    items={[
+                                        `v${note.version}`,
+                                        formatNoteDate(note.date),
+                                    ]}
+                                    nowrap
+                                />
                             </div>
 
                             <ul className="space-y-2">

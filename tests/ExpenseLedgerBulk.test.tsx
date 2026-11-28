@@ -466,7 +466,7 @@ describe("Ledger Power Tools, Fast Log & Bulk Add", () => {
             fireEvent.click(screen.getByRole("button", { name: "+ Row" })); // blank row 3
 
             const save = screen.getByRole("button", {
-                name: "Save 2 · S$37.50",
+                name: "Save 2 for S$37.50",
             });
             fireEvent.click(save);
 
@@ -627,7 +627,7 @@ describe("Ledger Power Tools, Fast Log & Bulk Add", () => {
             });
 
             expect(
-                screen.getByRole("button", { name: "Save 1 · S$10.00" }),
+                screen.getByRole("button", { name: "Save 1 for S$10.00" }),
             ).toBeInTheDocument();
             fireEvent.click(screen.getByRole("button", { name: /^Save 1/ }));
 

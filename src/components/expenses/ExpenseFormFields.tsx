@@ -48,6 +48,7 @@ import { FilterChip } from "../ui/FilterChip";
 import { FIELD_LABEL_CLASS } from "../ui/fieldStyles";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { CurrencyText } from "../ui/CurrencyText";
+import { MetaList } from "../ui/MetaList";
 
 const GOAL_CHIP_LIMIT = 4;
 
@@ -276,9 +277,7 @@ export function ExpenseFormFields({
             payerName,
             splitLabel,
             draft.currencyCode !== "SGD" ? draft.currencyCode : null,
-        ]
-            .filter(Boolean)
-            .join(" · ");
+        ];
     }, [
         draft.date,
         todayStr,
@@ -578,12 +577,12 @@ export function ExpenseFormFields({
                 >
                     <div className="flex min-w-0 items-center gap-2">
                         <span className="shrink-0">More</span>
-                        <span
+                        <MetaList
                             data-testid="expense-more-summary"
-                            className="truncate font-semibold text-(--text-faint)"
-                        >
-                            {moreSummary}
-                        </span>
+                            className="font-semibold text-(--text-faint)"
+                            items={moreSummary}
+                            nowrap
+                        />
                         {moreOptionsActiveCount > 0 && (
                             <span className="shrink-0 rounded-full border border-(--border-ink) bg-(--pastel-butter) px-2 py-0.5 text-2xs font-bold text-(--text-ink)">
                                 {moreOptionsActiveCount} active

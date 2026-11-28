@@ -21,7 +21,7 @@ Full git, PR, migration, screenshot and backlog rules: [docs/agent-workflow.md](
 Details in [docs/agent-ui-reference.md](docs/agent-ui-reference.md). Read it before touching UI, styles or copy.
 
 - **Tailwind v4 canonical classes:** `bg-(--token)` not `bg-[var(--token)]`, `shadow-cute`, `border-2`, `z-50`, `wrap-break-word`. No hardcoded hex colours.
-- **Primitives, never ad-hoc:** `Alert`, `ConfirmModal`, `CategoryBadge`, `Card`/`StatCard`, `Button`, `AnimatedModal`, `Badge`, `Input`/`Select`, `CurrencyText`, `TooltipPopover`, `TruncatedText` (all in `src/components/ui/`).
+- **Primitives, never ad-hoc:** `Alert`, `ConfirmModal`, `CategoryBadge`, `Card`/`StatCard`, `Button`, `AnimatedModal`, `Badge`, `Input`/`Select`, `CurrencyText`, `TooltipPopover`, `TruncatedText`, `MetaList` (all in `src/components/ui/`). Never `·` separators: use `MetaList` or label + bold value.
 - **Shared utils:** import month names from `src/lib/dateUtils`, presets from `src/lib/categoryPresets`, `autoBalanceAllocations` from `src/lib/financialFormulas`, dirty checks from `src/lib/domUtils`.
 - **Motion:** `m.*` from `motion/react`, presets in `src/lib/motion.ts`, animate `transform`/`opacity` only, never `transition-all`, honour reduced motion.
 - **Copy:** headers and buttons 1-3 words, empty states = 2-word title + one prompt + one CTA, one figure per visual.

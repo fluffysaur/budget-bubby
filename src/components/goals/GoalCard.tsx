@@ -169,9 +169,18 @@ export function GoalCard({
                                 >
                                     {goal.goal_type === "buffer" && (
                                         <Badge variant="mint" size="sm">
-                                            {goal.buffer_months
-                                                ? `Buffer · ${goal.buffer_months} mo`
-                                                : "Buffer"}
+                                            {goal.buffer_months ? (
+                                                <>
+                                                    <span className="font-medium opacity-75">
+                                                        Buffer
+                                                    </span>
+                                                    <span className="font-black">
+                                                        {goal.buffer_months} mo
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                "Buffer"
+                                            )}
                                         </Badge>
                                     )}
                                     {goal.tags?.map((tag) => (

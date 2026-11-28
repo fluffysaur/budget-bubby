@@ -729,9 +729,18 @@ export function CreditCardTrackerSection({
                                                                 <div className="flex items-baseline justify-between">
                                                                     <span className="text-xs font-bold text-(--text-muted)">
                                                                         {viewMode ===
-                                                                        "active"
-                                                                            ? `Statement · ${formatShortMonth(cardMonth)}`
-                                                                            : "Statement"}
+                                                                        "active" ? (
+                                                                            <>
+                                                                                Statement{" "}
+                                                                                <span className="text-(--text-ink)">
+                                                                                    {formatShortMonth(
+                                                                                        cardMonth,
+                                                                                    )}
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            "Statement"
+                                                                        )}
                                                                     </span>
                                                                     <span className="text-(--text-ink) font-display font-black text-lg">
                                                                         <CurrencyText
@@ -851,9 +860,18 @@ export function CreditCardTrackerSection({
                                                                 <div className="min-w-0 flex-1">
                                                                     <div className="text-xs font-bold text-(--text-muted)">
                                                                         {viewMode ===
-                                                                        "active"
-                                                                            ? `Pending · ${formatShortMonth(cardMonth)}`
-                                                                            : "Pending"}
+                                                                        "active" ? (
+                                                                            <>
+                                                                                Pending{" "}
+                                                                                <span className="text-(--text-ink)">
+                                                                                    {formatShortMonth(
+                                                                                        cardMonth,
+                                                                                    )}
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            "Pending"
+                                                                        )}
                                                                     </div>
                                                                     <div className="text-[11px] text-(--text-muted)">
                                                                         Statement{" "}
@@ -1045,7 +1063,9 @@ export function CreditCardTrackerSection({
                             }
                             type="date"
                             value={stmtDueDateInput}
-                            onChange={(e) => setStmtDueDateInput(e.target.value)}
+                            onChange={(e) =>
+                                setStmtDueDateInput(e.target.value)
+                            }
                             required
                         />
 

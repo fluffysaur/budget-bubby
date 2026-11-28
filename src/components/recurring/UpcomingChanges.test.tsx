@@ -46,7 +46,7 @@ describe("UpcomingChanges", () => {
             />,
         );
         expect(screen.getByRole("listitem")).toHaveTextContent(
-            "starts Mar 2027 · deduction",
+            "starts Mar 2027, deduction",
         );
     });
 
@@ -67,7 +67,7 @@ describe("UpcomingChanges", () => {
             />,
         );
         const row = screen.getByRole("listitem");
-        expect(row).toHaveTextContent("ends Apr 2027 · deduction");
+        expect(row).toHaveTextContent("ends Apr 2027, deduction");
         expect(row).not.toHaveTextContent("S$");
     });
 });

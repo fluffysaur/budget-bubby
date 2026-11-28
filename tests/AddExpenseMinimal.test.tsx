@@ -71,7 +71,7 @@ describe("Add Expense minimal layout", () => {
 
         expect(moreToggle()).toHaveAttribute("aria-expanded", "false");
         expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
-            /^Today · .+ · Personal$/,
+            /^Today, .+, Personal$/,
         );
 
         // Secondary fields live inside the collapsed section
@@ -197,7 +197,7 @@ describe("Add Expense minimal layout", () => {
         });
 
         expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
-            /^Today ·/,
+            /^Today,/,
         );
 
         // Simulate clock advancing past midnight to 2026-11-08 while modal remains mounted
@@ -223,7 +223,7 @@ describe("Add Expense minimal layout", () => {
 
         // 2026-11-07 is now Yesterday relative to 2026-11-08
         expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
-            /^Yesterday ·/,
+            /^Yesterday,/,
         );
     });
 });
